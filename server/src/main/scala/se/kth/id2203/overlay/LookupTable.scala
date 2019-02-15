@@ -31,15 +31,17 @@ import se.kth.id2203.networking.NetAddress;
 @SerialVersionUID(0x57bdfad1eceeeaaeL)
 class LookupTable extends NodeAssignment with Serializable {
 
-  val partitions = TreeSetMultiMap.empty[Int, NetAddress];
+  val nr_partitions = 6
+
+  val partitions = TreeSetMultiMap.empty[Int, NetAddress]
 
   def lookup(key: String): Iterable[NetAddress] = {
-    val keyHash = key.hashCode();
+    val keyHash = key.hashCode()
     val partition = partitions.floor(keyHash) match {
       case Some(k) => k
       case None    => partitions.lastKey
     }
-    return partitions(partition);
+    return partitions(partition)
   }
 
   def getNodes(): Set[NetAddress] = partitions.foldLeft(Set.empty[NetAddress]) {
@@ -47,19 +49,19 @@ class LookupTable extends NodeAssignment with Serializable {
   }
 
   override def toString(): String = {
-    val sb = new StringBuilder();
-    sb.append("LookupTable(\n");
-    sb.append(partitions.mkString(","));
-    sb.append(")");
-    return sb.toString();
+    val sb = new StringBuilder()
+    sb.append("LookupTable(\n")
+    sb.append(partitions.mkString(","))
+    sb.append(")")
+    return sb.toString()
   }
 
 }
 
 object LookupTable {
   def generate(nodes: Set[NetAddress]): LookupTable = {
-    val lut = new LookupTable();
-    lut.partitions ++= (0 -> nodes);
+    val lut = new LookupTable()
+    lut.partitions ++= (0 -> nodes)
     lut
   }
 }

@@ -21,7 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package se.kth.id2203.overlay;
+package se.kth.id2203.overlay
+
+;
 
 import se.kth.id2203.bootstrapping._;
 import se.kth.id2203.networking._;
@@ -31,15 +33,16 @@ import se.sics.kompics.timer.Timer;
 import util.Random;
 
 /**
- * The V(ery)S(imple)OverlayManager.
- * <p>
- * Keeps all nodes in a single partition in one replication group.
- * <p>
- * Note: This implementation does not fulfill the project task. You have to
- * support multiple partitions!
- * <p>
- * @author Lars Kroll <lkroll@kth.se>
- */
+  * The V(ery)S(imple)OverlayManager.
+  * <p>
+  * Keeps all nodes in a single partition in one replication group.
+  * <p>
+  * Note: This implementation does not fulfill the project task. You have to
+  * support multiple partitions!
+  * <p>
+  *
+  * @author Lars Kroll <lkroll@kth.se>
+  */
 class VSOverlayManager extends ComponentDefinition {
 
   //******* Ports ******
@@ -47,16 +50,18 @@ class VSOverlayManager extends ComponentDefinition {
   val boot = requires(Bootstrapping);
   val net = requires[Network];
   val timer = requires[Timer];
+
   //******* Fields ******
   val self = cfg.getValue[NetAddress]("id2203.project.address");
   private var lut: Option[LookupTable] = None;
+
   //******* Handlers ******
   boot uponEvent {
     case GetInitialAssignments(nodes) => handle {
       log.info("Generating LookupTable...");
       val lut = LookupTable.generate(nodes);
       logger.debug("Generated assignments:\n$lut");
-      trigger (new InitialAssignments(lut) -> boot);
+      trigger(new InitialAssignments(lut) -> boot);
     }
     case Booted(assignment: LookupTable) => handle {
       log.info("Got NodeAssignment, overlay ready.");
@@ -66,6 +71,7 @@ class VSOverlayManager extends ComponentDefinition {
 
   net uponEvent {
     case NetMessage(header, RouteMsg(key, msg)) => handle {
+      // Get the nodes for this key
       val nodes = lut.get.lookup(key);
       assert(!nodes.isEmpty);
       val i = Random.nextInt(nodes.size);
@@ -78,7 +84,7 @@ class VSOverlayManager extends ComponentDefinition {
         case Some(l) => {
           log.debug("Accepting connection request from ${header.src}");
           val size = l.getNodes().size;
-          trigger (NetMessage(self, header.src, msg.ack(size)) -> net);
+          trigger(NetMessage(self, header.src, msg.ack(size)) -> net);
         }
         case None => log.info("Rejecting connection request from ${header.src}, as system is not ready, yet.");
       }
@@ -92,7 +98,7 @@ class VSOverlayManager extends ComponentDefinition {
       val i = Random.nextInt(nodes.size);
       val target = nodes.drop(i).head;
       log.info(s"Routing message for key $key to $target");
-      trigger (NetMessage(self, target, msg) -> net);
+      trigger(NetMessage(self, target, msg) -> net);
     }
   }
 }
