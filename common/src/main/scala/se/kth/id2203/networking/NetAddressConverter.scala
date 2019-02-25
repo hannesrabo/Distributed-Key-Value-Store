@@ -35,25 +35,26 @@ object NetAddressConverter extends Converter[NetAddress] with StrictLogging {
     try {
       o match {
         case m: Map[_, _] => {
-          val hostname: String = Conversions.convert(m.get("ip"), classOf[String]);
-          val port: Int = Conversions.convert(m.get("port"), classOf[Integer]);
-          val ip = InetAddress.getByName(hostname);
-          return NetAddress(ip, port);
+          val hostname: String = Conversions.convert(m.get("ip"), classOf[String])
+          val port: Int = Conversions.convert(m.get("port"), classOf[Integer])
+          val ip = InetAddress.getByName(hostname)
+          return NetAddress(ip, port)
         }
         case s: String => {
-          val ipport = s.split(":");
-          val ip = InetAddress.getByName(ipport(0));
-          val port = Integer.parseInt(ipport(1));
-          return NetAddress(ip, port);
+          val ipport = s.split(":")
+          val ip = InetAddress.getByName(ipport(0))
+          val port = Integer.parseInt(ipport(1))
+          return NetAddress(ip, port)
         }
       }
     } catch {
       case ex: Throwable => {
-        logger.error("Error converting object into NetAddress: object={}\nException was:{}", o, ex);
-        return null;
+        logger.error("Error converting object into NetAddress: object={}\nException was:{}", o, ex)
+        return null
       }
     }
-    return null;
+    return null
   }
-  override def `type`(): Class[NetAddress] = classOf[NetAddress];
+
+  override def `type`(): Class[NetAddress] = classOf[NetAddress]
 }

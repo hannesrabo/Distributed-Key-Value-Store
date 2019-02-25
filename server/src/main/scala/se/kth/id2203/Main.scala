@@ -56,6 +56,7 @@ object Main {
     val conf = new Conf(args);
     // avoid constant conversion of the address by converting once and reassigning
     // sorry Java API  only :(
+
     val c = Kompics.getConfig().asInstanceOf[Config.Impl];
     val configSelf = c.getValue("id2203.project.address", classOf[NetAddress]);
     assert(configSelf != null, { "No config provided!" }); // it would be in the reference.conf
@@ -63,16 +64,17 @@ object Main {
     val self = (conf.ip.toOption, conf.port.toOption) match {
       case (None, None) => configSelf
       case (cip, cp)    => NetAddress(cip.getOrElse(configSelf.getIp()), cp.getOrElse(configSelf.getPort()))
-    };
-    configBuilder.setValue("id2203.project.address", self);
-    if (conf.server.isSupplied) {
-      configBuilder.setValue("id2203.project.bootstrap-address", conf.server());
     }
-    val configUpdate = configBuilder.finalise();
-    c.apply(configUpdate, ValueMerger.NONE);
-    Kompics.createAndStart(classOf[HostComponent]);
-    Kompics.logger.info("Kompics started.");
-    Kompics.waitForTermination();
-    Kompics.logger.info("Kompics was terminated. Exiting...");
+
+    configBuilder.setValue("id2203.project.address", self)
+    if (conf.server.isSupplied) {
+      configBuilder.setValue("id2203.project.bootstrap-address", conf.server())
+    }
+    val configUpdate = configBuilder.finalise()
+    c.apply(configUpdate, ValueMerger.NONE)
+    Kompics.createAndStart(classOf[HostComponent])
+    Kompics.logger.info("Kompics started.")
+    Kompics.waitForTermination()
+    Kompics.logger.info("Kompics was terminated. Exiting...")
   }
 }

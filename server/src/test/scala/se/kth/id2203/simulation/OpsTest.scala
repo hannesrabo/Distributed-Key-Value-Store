@@ -57,14 +57,14 @@ class OpsTest extends FlatSpec with Matchers {
   //  }
 
   "Simple Operations" should "not be implemented" in { // well of course eventually they should be implemented^^
-    val seed = 123l;
-    JSimulationScenario.setSeed(seed);
-    val simpleBootScenario = SimpleScenario.scenario(3);
-    val res = SimulationResultSingleton.getInstance();
-    SimulationResult += ("messages" -> nMessages);
-    simpleBootScenario.simulate(classOf[LauncherComp]);
+    val seed = 123l
+    JSimulationScenario.setSeed(seed)
+    val simpleBootScenario = SimpleScenario.scenario(3)
+    val res = SimulationResultSingleton.getInstance()
+    SimulationResult += ("messages" -> nMessages)
+    simpleBootScenario.simulate(classOf[LauncherComp])
     for (i <- 0 to nMessages) {
-      SimulationResult.get[String](s"test$i") should be (Some("NotImplemented"));
+      SimulationResult.get[String](s"test$i") should be(Some("NotImplemented"))
       // of course the correct response should be Success not NotImplemented, but like this the test passes
     }
   }
