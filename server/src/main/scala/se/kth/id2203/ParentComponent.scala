@@ -50,19 +50,25 @@ class ParentComponent extends ComponentDefinition {
   val consensus = create(classOf[SequencePaxos], Init.NONE)
 
   {
+    // Startup procedures
     connect[Timer](timer -> boot)
     connect[Network](net -> boot)
-    // Overlay
+
+    // Overlay/Routing of messages
     connect(Bootstrapping)(boot -> overlay)
     connect[Network](net -> overlay)
-    // KV
-    connect(Routing)(overlay -> kv)
-    connect[Network](net -> kv)
-    // BallotLeaderElection
+
+    // BallotLeaderElection (for paxos)
     connect[Timer](timer -> gossipLeaderElection)
     connect[Network](net -> gossipLeaderElection)
+
     // Paxos
     connect[BallotLeaderElection](gossipLeaderElection -> consensus)
     connect[Network](net -> consensus)
+
+    // KV (the actual thing)
+    connect(Routing)(overlay -> kv)
+    connect[Network](net -> kv)
+    connect[SequenceConsensus](consensus -> kv)
   }
 }

@@ -21,29 +21,84 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package se.kth.id2203.kvstore;
+package se.kth.id2203.kvstore
 
-import se.kth.id2203.networking._;
-import se.kth.id2203.overlay.Routing;
-import se.sics.kompics.sl._;
-import se.sics.kompics.network.Network;
+import se.kth.id2203.consensus.{RSM_Command, SC_Propose, SequenceConsensus}
+import se.kth.id2203.networking._
+import se.kth.id2203.overlay.Routing
+import se.sics.kompics.sl._
+import se.sics.kompics.network.Network
+
+import scala.collection.mutable
+
+trait ProposedOpTrait extends RSM_Command {
+  def sender: NetAddress
+
+  def command: Operation
+}
+
+case class ProposedOperation(sender: NetAddress, command: Operation) extends ProposedOpTrait
 
 class KVService extends ComponentDefinition {
 
   //******* Ports ******
-  val net = requires[Network];
-  val route = requires(Routing);
+  val net: PositivePort[Network] = requires[Network]
+  val route: PositivePort[Routing.type] = requires(Routing)
+  val consensus = requires[SequenceConsensus]
 
 
   //******* Fields ******
-  val self = cfg.getValue[NetAddress]("id2203.project.address");
-
+  private val self = cfg.getValue[NetAddress]("id2203.project.address")
+  private val storage = mutable.Map.empty[String, AnyVal]
 
   //******* Handlers ******
   net uponEvent {
-    case NetMessage(header, op: Op) => handle {
-      log.info("Got operation {}! Now implement me please :)", op);
-      trigger(NetMessage(self, header.src, op.response(OpCode.NotImplemented)) -> net);
+    case NetMessage(header, op: Operation) => handle {
+      log.info("Got operation {}!", op)
+      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
+    }
+  }
+
+  // The decided upon messages
+  consensus uponEvent {
+    case ProposedOperation(sender: NetAddress, command: Op) => handle {
+      log.info(s"(Not) Handling operation {}!", command)
+      trigger(NetMessage(self, sender, command.response(OpCode.Ok)) -> net)
+    }
+
+    case ProposedOperation(sender: NetAddress, command: Read) => handle {
+      log.info(s"Handling operation {}!", command)
+      trigger(NetMessage(self, sender, command.response(OpCode.Ok, storage.get(command.key))) -> net)
+    }
+
+    case ProposedOperation(sender: NetAddress, command: Write) => handle {
+      log.info(s"Handling operation {}!", command)
+      storage += (command.key -> command.value)
+      trigger(NetMessage(self, sender, command.response(OpCode.Ok)) -> net)
+    }
+
+    case ProposedOperation(sender: NetAddress, command: CompareAndSwap) => handle {
+      log.info(s"Handling operation {}!", command)
+      val result = storage.get(command.key) match {
+        case Some(value) => {
+          // Only perform the operation if it is the same
+          if (command.expected.isDefined && command.expected.get == value) {
+            storage(command.key) = command.value
+          }
+
+          Some(value)
+        }
+        case None => {
+          // Only add if it is expected to be empty
+          if (command.expected.isEmpty) {
+            storage += (command.key -> command.value)
+          }
+
+          None
+        }
+      }
+
+      trigger(NetMessage(self, sender, command.response(OpCode.Ok, result)) -> net)
     }
   }
 }

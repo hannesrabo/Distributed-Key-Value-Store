@@ -72,27 +72,26 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
   ballotLeaderElection uponEvent {
     case BLE_Leader(l, n) => handle {
       if (n > nL) {
-        nL = n;
-        leader = Some(l);
+        nL = n
+        leader = Some(l)
         if (self == l && nL > nProm) {
           // Im a new leader, reset everything
-          state = (LEADER, PREPARE);
-          propCmds = List.empty;
-          las.clear;
-          lds.clear;
-          acks.clear;
-          lc = 0;
+          state = (LEADER, PREPARE)
+          propCmds = List.empty
+          las.clear
+          lds.clear
+          acks.clear
+          lc = 0
           others.foreach(p =>
             trigger(NetMessage(self, p, Prepare(nL, ld, na)) -> net)
-            //            trigger(PL_Send(p, Prepare(nL, ld, na)) -> pl)
-          );
+          )
 
           // Create the initial state
-          acks += (l -> (na, va.takeRight(va.size - ld)));
-          lds += (self -> ld);
-          nProm = nL;
+          acks += (l -> (na, va.takeRight(va.size - ld)))
+          lds += (self -> ld)
+          nProm = nL
         } else {
-          state = (FOLLOWER, state._2);
+          state = (FOLLOWER, state._2)
         }
       }
     }
@@ -140,8 +139,8 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
 
       } else if ((n == nL) && (state == (LEADER, ACCEPT))) {
         // Late answers
-        lds += (header.src -> lda);
-        val sfx = va.takeRight(va.size - lds(header.src));
+        lds += (header.src -> lda)
+        val sfx = va.takeRight(va.size - lds(header.src))
         trigger(NetMessage(self, header.src, AcceptSync(nL, sfx, lds(header.src))) -> net)
 
         if (lc != 0) // Update with newly decided values
@@ -152,7 +151,6 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
       if ((nProm == nL) && (state == (FOLLOWER, PREPARE))) {
         na = nL
         va = va.take(ldp) ++ sfx
-        //        trigger(PL_Send(p, Accepted(nL, va.size)) -> pl);
         trigger(NetMessage(self, header.src, Accepted(nL, va.size)) -> net)
         state = (FOLLOWER, ACCEPT)
       }
@@ -160,7 +158,6 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
     case NetMessage(header, Accept(nL, c)) => handle {
       if ((nProm == nL) && (state == (FOLLOWER, ACCEPT))) {
         va ++= List(c)
-        //        trigger(PL_Send(p, Accepted(nL, va.size)) -> pl);
         trigger(NetMessage(self, header.src, Accepted(nL, va.size)) -> net)
       }
     }
@@ -194,11 +191,11 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
   sequenceConsensus uponEvent {
     case SC_Propose(c) => handle {
       if (state == (LEADER, PREPARE)) {
-        propCmds ++= List(c);
+        propCmds ++= List(c)
       }
       else if (state == (LEADER, ACCEPT)) {
-        va ++= List(c);
-        las(self) = las(self) + 1;
+        va ++= List(c)
+        las(self) = las(self) + 1
         pi.filter(p => p != self && lds.contains(p))
           .foreach(p =>
             trigger(NetMessage(self, p, Accept(nL, c)) -> net)

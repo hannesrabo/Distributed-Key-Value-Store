@@ -20,7 +20,7 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
   val timer = requires[Timer]
 
   val (self, topology) = init match {
-    case Init(s: NetAddress, top: List[NetAddress]) => (s, top)
+    case Init(self: NetAddress, topology: List[NetAddress]@unchecked) => (self, topology)
   }
 
   // TODO: Someone sets "id2203.project.keepAlivePeriod". Maybe use it instead?
@@ -87,9 +87,9 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
       topology.foreach(process => {
         if (process != self)
           trigger(NetMessage(self, process, HeartbeatReq(round, highestBallot)) -> net)
-      });
+      })
 
-      startTimer(period);
+      startTimer(period)
     }
   }
 
@@ -98,7 +98,7 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
       if (hb > highestBallot)
         highestBallot = hb
 
-      trigger(NetMessage(self, header.src, HeartbeatResp(r, ballot)) -> net);
+      trigger(NetMessage(self, header.src, HeartbeatResp(r, ballot)) -> net)
     }
     case NetMessage(header, HeartbeatResp(r, b)) => handle {
       if (r == round)
