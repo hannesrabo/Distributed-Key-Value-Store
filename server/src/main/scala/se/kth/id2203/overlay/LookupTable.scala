@@ -21,7 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package se.kth.id2203.overlay;
+package se.kth.id2203.overlay
+
+;
 
 import com.larskroll.common.collections._;
 import java.util.Collection;
@@ -31,7 +33,7 @@ import se.kth.id2203.networking.NetAddress;
 @SerialVersionUID(0x57bdfad1eceeeaaeL)
 class LookupTable extends NodeAssignment with Serializable {
 
-  val nr_partitions = 6
+  val NR_PARTITIONS = 6
 
   val partitions = TreeSetMultiMap.empty[Int, NetAddress]
 
@@ -39,7 +41,7 @@ class LookupTable extends NodeAssignment with Serializable {
     val keyHash = key.hashCode()
     val partition = partitions.floor(keyHash) match {
       case Some(k) => k
-      case None    => partitions.lastKey
+      case None => partitions.lastKey
     }
     return partitions(partition)
   }
@@ -61,7 +63,16 @@ class LookupTable extends NodeAssignment with Serializable {
 object LookupTable {
   def generate(nodes: Set[NetAddress]): LookupTable = {
     val lut = new LookupTable()
-    lut.partitions ++= (0 -> nodes)
+    val listOfPartitions = nodes grouped lut.NR_PARTITIONS;
+    val partitionSize: Int = Int.MaxValue / lut.NR_PARTITIONS;
+
+    var i = 0
+    listOfPartitions.foreach(nodes => {
+      val currentFloor = i
+      i += partitionSize
+      lut.partitions ++= (currentFloor -> nodes)
+    })
+
     lut
   }
 }
