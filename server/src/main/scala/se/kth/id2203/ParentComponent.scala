@@ -24,12 +24,13 @@
 package se.kth.id2203;
 
 import se.kth.id2203.bootstrapping._
-import se.kth.id2203.kvstore.KVService;
-import se.kth.id2203.networking.NetAddress;
+import se.kth.id2203.consensus.{BallotLeaderElection, GossipLeaderElection, SequenceConsensus, SequencePaxos}
+import se.kth.id2203.kvstore.KVService
+import se.kth.id2203.networking.NetAddress
 import se.kth.id2203.overlay._
 import se.sics.kompics.sl._
-import se.sics.kompics.Init;
-import se.sics.kompics.network.Network;
+import se.sics.kompics.Init
+import se.sics.kompics.network.Network
 import se.sics.kompics.timer.Timer;
 
 class ParentComponent extends ComponentDefinition {
@@ -44,6 +45,9 @@ class ParentComponent extends ComponentDefinition {
     case Some(_) => create(classOf[BootstrapClient], Init.NONE) // start in client mode
     case None => create(classOf[BootstrapServer], Init.NONE) // start in server mode
   }
+  // TODO: Init properly
+  val gossipLeaderElection = create(classOf[GossipLeaderElection], Init.NONE)
+  val consensus = create(classOf[SequencePaxos], Init.NONE)
 
   {
     connect[Timer](timer -> boot)
@@ -54,5 +58,11 @@ class ParentComponent extends ComponentDefinition {
     // KV
     connect(Routing)(overlay -> kv)
     connect[Network](net -> kv)
+    // BallotLeaderElection
+    connect[Timer](timer -> gossipLeaderElection)
+    connect[Network](net -> gossipLeaderElection)
+    // Paxos
+    connect[BallotLeaderElection](gossipLeaderElection -> consensus)
+    connect[Network](net -> consensus)
   }
 }
