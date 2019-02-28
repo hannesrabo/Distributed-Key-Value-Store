@@ -1,18 +1,12 @@
 package se.kth.id2203.consensus
 
 
-import se.kth.id2203.networking.NetMessage
+import se.kth.id2203.networking.{NetAddress, NetMessage}
 import se.sics.kompics.sl._
 import se.sics.kompics.network._
 import se.sics.kompics.KompicsEvent
 
-import scala.collection.mutable;
-
-//import se.kth.edx.id2203.core.ExercisePrimitives.AddressUtils._
-//import se.kth.edx.id2203.core.ExercisePrimitives.AddressUtils
-//import se.kth.edx.id2203.validation._
-//import se.kth.edx.id2203.core.Ports.{SequenceConsensus, _}
-
+import scala.collection.mutable
 
 // Internal events
 case class Prepare(nL: Long, ld: Int, na: Long) extends KompicsEvent
@@ -44,22 +38,21 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
   val ballotLeaderElection = requires[BallotLeaderElection]
   val net = requires[Network]
 
+  // Used internally
   import Role._
   import State._
 
-  // TODO: replace Address
   val (self, pi, others) = init match {
-    case Init(addr: Address, pi: Set[Address]@unchecked) => (addr, pi, pi - addr)
+    case Init(addr: NetAddress, pi: Set[NetAddress]@unchecked) => (addr, pi, pi - addr)
   }
 
-  // TODO: Replace Address with NetAddress??
-  val las = mutable.Map.empty[Address, Int]
-  val lds = mutable.Map.empty[Address, Int]
-  val acks = mutable.Map.empty[Address, (Long, List[RSM_Command])]
+  val las = mutable.Map.empty[NetAddress, Int]
+  val lds = mutable.Map.empty[NetAddress, Int]
+  val acks = mutable.Map.empty[NetAddress, (Long, List[RSM_Command])]
   var state = (FOLLOWER, UNKNOWN)
   var nL = 0l
   var nProm = 0l
-  var leader: Option[Address] = None
+  var leader: Option[NetAddress] = None
   var na = 0l
   var va = List.empty[RSM_Command]
   var ld = 0
@@ -117,10 +110,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         else
           List.empty
 
-        // TODO: Replace header.dst??
-        trigger(NetMessage(header.dst, header.src, Promise(np, na, sfx, ld)) -> net)
-        //        trigger(PL_Send(p, Promise(np, na, sfx, ld)) -> pl);
-
+        trigger(NetMessage(self, header.src, Promise(np, na, sfx, ld)) -> net)
       }
     }
     case NetMessage(header, Promise(n, na, sfxa, lda)) => handle {
@@ -128,7 +118,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
 
         // TODO: header/lds/acks data structure
         acks += (header.src -> (na, sfxa))
-        lds += (header -> lda)
+        lds += (header.src -> lda)
         // If we have a majority
         if (acks.size == Math.ceil((pi.size + 1) / 2).toInt) {
           // We can drop the key and then drop the round
@@ -144,8 +134,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
             .foreach(p => {
               // grab all elements not yet accepted
               val sfxp = va.takeRight(va.size - lds(p))
-              trigger(NetMessage(header.dst, p, AcceptSync(nL, sfxp, lds(p))) -> net)
-              //              trigger(PL_Send(p, AcceptSync(nL, sfxp, lds(p))) -> pl)
+              trigger(NetMessage(self, p, AcceptSync(nL, sfxp, lds(p))) -> net)
             })
         }
 
@@ -153,12 +142,10 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         // Late answers
         lds += (header.src -> lda);
         val sfx = va.takeRight(va.size - lds(header.src));
-        trigger(NetMessage(header.dst, header.src, AcceptSync(nL, sfx, lds(header.src))) -> net)
-        //        trigger(PL_Send(a, AcceptSync(nL, sfx, lds(a))) -> pl);
+        trigger(NetMessage(self, header.src, AcceptSync(nL, sfx, lds(header.src))) -> net)
 
         if (lc != 0) // Update with newly decided values
-          trigger(NetMessage(header.dst, header.src, Decide(ld, nL)) -> net)
-        //          trigger(PL_Send(a, Decide(ld, nL)) -> pl);
+          trigger(NetMessage(self, header.src, Decide(ld, nL)) -> net)
       }
     }
     case NetMessage(header, AcceptSync(nL, sfx, ldp)) => handle {
@@ -166,7 +153,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         na = nL
         va = va.take(ldp) ++ sfx
         //        trigger(PL_Send(p, Accepted(nL, va.size)) -> pl);
-        trigger(NetMessage(header.dst, header.src, Accepted(nL, va.size)) -> net)
+        trigger(NetMessage(self, header.src, Accepted(nL, va.size)) -> net)
         state = (FOLLOWER, ACCEPT)
       }
     }
@@ -174,7 +161,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
       if ((nProm == nL) && (state == (FOLLOWER, ACCEPT))) {
         va ++= List(c)
         //        trigger(PL_Send(p, Accepted(nL, va.size)) -> pl);
-        trigger(NetMessage(header.dst, header.src, Accepted(nL, va.size)) -> net)
+        trigger(NetMessage(self, header.src, Accepted(nL, va.size)) -> net)
       }
     }
     case NetMessage(_, Decide(l, nL)) => handle {
@@ -197,8 +184,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
           lc = m
           pi.filter(lds contains)
             .foreach(p =>
-              trigger(NetMessage(header.dst, p, Decide(lc, nL)) -> net)
-              //              trigger(PL_Send(p, Decide(lc, nL)) -> pl)
+              trigger(NetMessage(self, p, Decide(lc, nL)) -> net)
             )
         }
       }
@@ -216,7 +202,6 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         pi.filter(p => p != self && lds.contains(p))
           .foreach(p =>
             trigger(NetMessage(self, p, Accept(nL, c)) -> net)
-            //            trigger(PL_Send(p, Accept(nL, c)) -> pl)
           )
       }
     }
