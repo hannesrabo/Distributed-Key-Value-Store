@@ -39,24 +39,17 @@ class ParentComponent extends ComponentDefinition {
   val net = requires[Network]
   val timer = requires[Timer]
   //******* Children ******
-  val overlay = create(classOf[VSOverlayManager], Init.NONE)
-  val kv = create(classOf[KVService], Init.NONE)
   val boot = cfg.readValue[NetAddress]("id2203.project.bootstrap-address") match {
     case Some(_) => create(classOf[BootstrapClient], Init.NONE) // start in client mode
     case None => create(classOf[BootstrapServer], Init.NONE) // start in server mode
   }
-  // TODO: Init properly
-//  val gossipLeaderElection = create(classOf[GossipLeaderElection], Init.NONE)
-//  val consensus = create(classOf[SequencePaxos], Init.NONE)
 
-  {
-    // Startup procedures
-    connect[Timer](timer -> boot)
-    connect[Network](net -> boot)
+  def afterBoot(topology: Set[NetAddress]) = {
+    val self = cfg.getValue[NetAddress]("id2203.project.address")
 
-    // Overlay/Routing of messages
-    connect(Bootstrapping)(boot -> overlay)
-    connect[Network](net -> overlay)
+    val kv = create(classOf[KVService], Init.NONE)
+    val consensus = create(classOf[SequencePaxos], Init[SequencePaxos](self, topology))
+    val gossipLeaderElection = create(classOf[GossipLeaderElection], Init[GossipLeaderElection](self, topology))
 
     // BallotLeaderElection (for paxos)
     connect[Timer](timer -> gossipLeaderElection)
@@ -70,5 +63,17 @@ class ParentComponent extends ComponentDefinition {
     connect(Routing)(overlay -> kv)
     connect[Network](net -> kv)
     connect[SequenceConsensus](consensus -> kv)
+  }
+
+  val overlay = create(classOf[VSOverlayManager], Init[VSOverlayManager](afterBoot))
+
+  {
+    // Startup procedures
+    connect[Timer](timer -> boot)
+    connect[Network](net -> boot)
+
+    // Overlay/Routing of messages
+    connect(Bootstrapping)(boot -> overlay)
+    connect[Network](net -> overlay)
   }
 }

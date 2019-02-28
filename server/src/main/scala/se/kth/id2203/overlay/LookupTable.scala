@@ -46,6 +46,12 @@ class LookupTable extends NodeAssignment with Serializable {
     return partitions(partition)
   }
 
+  def lookupSelf(self: NetAddress): Iterable[NetAddress] = {
+    Set.empty[NetAddress]
+//    partitions.iterator.
+//      .filter(_.contains(self))
+  }
+
   def getNodes(): Set[NetAddress] = partitions.foldLeft(Set.empty[NetAddress]) {
     case (acc, kv) => acc ++ kv._2
   }
