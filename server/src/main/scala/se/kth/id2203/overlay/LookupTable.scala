@@ -63,14 +63,16 @@ class LookupTable extends NodeAssignment with Serializable {
 object LookupTable {
   def generate(nodes: Set[NetAddress]): LookupTable = {
     val lut = new LookupTable()
-    val listOfPartitions = nodes grouped lut.NR_PARTITIONS;
     val partitionSize: Int = Int.MaxValue / lut.NR_PARTITIONS;
+    val partitionNodeSize: Int = nodes.size / lut.NR_PARTITIONS;
+    val partitionedNodes: List[List[NetAddress]] = (nodes.toList.grouped(partitionNodeSize)).toList
 
     var i = 0
-    listOfPartitions.foreach(nodes => {
+    partitionedNodes.foreach(nodes => {
+      println(nodes)
       val currentFloor = i
       i += partitionSize
-      lut.partitions ++= (currentFloor -> nodes)
+      lut.partitions ++= (currentFloor -> nodes.toSet)
     })
 
     lut

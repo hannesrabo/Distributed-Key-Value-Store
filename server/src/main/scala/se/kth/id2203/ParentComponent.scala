@@ -46,8 +46,8 @@ class ParentComponent extends ComponentDefinition {
     case None => create(classOf[BootstrapServer], Init.NONE) // start in server mode
   }
   // TODO: Init properly
-  val gossipLeaderElection = create(classOf[GossipLeaderElection], Init.NONE)
-  val consensus = create(classOf[SequencePaxos], Init.NONE)
+//  val gossipLeaderElection = create(classOf[GossipLeaderElection], Init.NONE)
+//  val consensus = create(classOf[SequencePaxos], Init.NONE)
 
   {
     // Startup procedures
