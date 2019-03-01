@@ -43,6 +43,20 @@ class ClientConsole(val service: ClientService) extends CommandConsole with Pars
   override def layout: Layout = colouredLayout;
   override def onInterrupt(): Unit = exit();
 
+  parsed(P("op" ~ " " ~ simpleStr), usage = "op <key>", descr = "Executes op with <key>.") { key =>
+    println(s"Op with $key");
+
+    val fr = service.doOp(Op(key))
+    out.println("Operation sent! Awaiting response...");
+    try {
+      val r = Await.result(fr, 5.seconds);
+      out.println("Operation complete! Response was: " + r.status);
+    } catch {
+      case e: Throwable => logger.error("Error during op.", e);
+    }
+  }
+
+
   parsed(P("read" ~ " " ~ simpleStr), usage = "read <key>", descr = "Returns saved value for <key>.") { key =>
     println(s"ReadOp with $key");
 
