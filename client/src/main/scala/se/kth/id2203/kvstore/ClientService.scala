@@ -104,8 +104,7 @@ class ClientService extends ComponentDefinition {
     }
   }
 
-  def op(key: String): Future[OpResponse] = {
-    val op = Op(key);
+  def doOp(op: Operation): Future[OpResponse] = {
     val owf = OpWithPromise(op);
     trigger(owf -> onSelf);
     owf.promise.future

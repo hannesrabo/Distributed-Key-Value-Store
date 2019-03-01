@@ -43,17 +43,44 @@ class ClientConsole(val service: ClientService) extends CommandConsole with Pars
   override def layout: Layout = colouredLayout;
   override def onInterrupt(): Unit = exit();
 
-  val opCommand = parsed(P("op" ~ " " ~ simpleStr), usage = "op <key>", descr = "Executes an op for <key>.") { key =>
-    println(s"Op with $key");
+  parsed(P("read" ~ " " ~ simpleStr), usage = "read <key>", descr = "Returns saved value for <key>.") { key =>
+    println(s"ReadOp with $key");
 
-    val fr = service.op(key);
-    out.println("Operation sent! Awaiting response...");
+    val fr = service.doOp(Read(key))
+    out.println("Read operation sent! Awaiting response...");
     try {
       val r = Await.result(fr, 5.seconds);
       out.println("Operation complete! Response was: " + r.status);
     } catch {
       case e: Throwable => logger.error("Error during op.", e);
     }
-  };
+  }
 
+  parsed(P("write" ~ " " ~ simpleStr ~ ":" ~ simpleStr), usage = "write <key>:<value>", descr = "Saves <value> for <key>.") { parserVals =>
+    val (key, value) = parserVals
+    println(s"WriteOp with $key and $value");
+
+    val fr = service.doOp(Write(key, value))
+    out.println("Write operation sent! Awaiting response...");
+    try {
+      val r = Await.result(fr, 5.seconds);
+      out.println("Operation complete! Response was: " + r.status);
+    } catch {
+      case e: Throwable => logger.error("Error during op.", e);
+    }
+  }
+
+  parsed(P("cas" ~ " " ~ simpleStr ~ ":" ~ simpleStr ~ " " ~ simpleStr), usage = "cas <key>:<value> <expected>", descr = "Compare and swap. Saves <value> for <key> if the old value for <key> matches <expected>.") { parserVals =>
+    val (key, value, expected) = parserVals
+    println(s"Compare and swaps key: $key, value: $value if expected=$expected");
+
+    val fr = service.doOp(CompareAndSwap(key, value, Some(expected)))
+    out.println("Compare and swap operation sent! Awaiting response...");
+    try {
+      val r = Await.result(fr, 5.seconds);
+      out.println("Operation complete! Response was: " + r.status);
+    } catch {
+      case e: Throwable => logger.error("Error during op.", e);
+    }
+  }
 }
