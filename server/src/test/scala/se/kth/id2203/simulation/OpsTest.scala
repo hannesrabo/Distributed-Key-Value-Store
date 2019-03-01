@@ -24,35 +24,36 @@
 package se.kth.id2203.simulation
 
 import org.scalatest._
-import se.kth.id2203.ParentComponent;
-import se.kth.id2203.networking._;
+import se.kth.id2203.ParentComponent
+import se.kth.id2203.networking._
 import se.sics.kompics.network.Address
-import java.net.{ InetAddress, UnknownHostException };
-import se.sics.kompics.sl._;
-import se.sics.kompics.sl.simulator._;
-import se.sics.kompics.simulator.{ SimulationScenario => JSimulationScenario }
+import java.net.{InetAddress, UnknownHostException}
+import se.sics.kompics.sl._
+import se.sics.kompics.sl.simulator._
+import se.sics.kompics.simulator.{SimulationScenario => JSimulationScenario}
 import se.sics.kompics.simulator.run.LauncherComp
-import se.sics.kompics.simulator.result.SimulationResultSingleton;
+import se.sics.kompics.simulator.result.SimulationResultSingleton
+
 import scala.concurrent.duration._
 
 class OpsTest extends FlatSpec with Matchers {
 
-  private val nMessages = 10;
+  private val nMessages = 10
 
   //  "Classloader" should "be something" in {
-  //    val cname = classOf[SimulationResultSingleton].getCanonicalName();
-  //    var cl = classOf[SimulationResultSingleton].getClassLoader;
-  //    var i = 0;
+  //    val cname = classOf[SimulationResultSingleton].getCanonicalName()
+  //    var cl = classOf[SimulationResultSingleton].getClassLoader
+  //    var i = 0
   //    while (cl != null) {
   //      val res = try {
-  //        val c = cl.loadClass(cname);
+  //        val c = cl.loadClass(cname)
   //        true
   //      } catch {
   //        case t: Throwable => false
   //      }
-  //      println(s"$i -> ${cl.getClass.getName} has class? $res");
-  //      cl = cl.getParent();
-  //      i -= 1;
+  //      println(s"$i -> ${cl.getClass.getName} has class? $res")
+  //      cl = cl.getParent()
+  //      i -= 1
   //    }
   //  }
 
@@ -63,6 +64,22 @@ class OpsTest extends FlatSpec with Matchers {
     val res = SimulationResultSingleton.getInstance()
     SimulationResult += ("messages" -> nMessages)
     simpleBootScenario.simulate(classOf[LauncherComp])
+    
+    for (i <- 0 to nMessages) {
+      SimulationResult.get[String](s"test$i") should be(Some("NotImplemented"))
+      // of course the correct response should be Success not NotImplemented, but like this the test passes
+    }
+  }
+
+
+  "Write then Read" should "read the writen value" in { // well of course eventually they should be implemented^^
+    val seed = 123l
+    JSimulationScenario.setSeed(seed)
+    val simpleBootScenario = SimpleScenario.scenario(3)
+    val res = SimulationResultSingleton.getInstance()
+    SimulationResult += ("messages" -> nMessages)
+    simpleBootScenario.simulate(classOf[LauncherComp])
+
     for (i <- 0 to nMessages) {
       SimulationResult.get[String](s"test$i") should be(Some("NotImplemented"))
       // of course the correct response should be Success not NotImplemented, but like this the test passes
@@ -75,24 +92,24 @@ object SimpleScenario {
 
   import Distributions._
   // needed for the distributions, but needs to be initialised after setting the seed
-  implicit val random = JSimulationScenario.getRandom();
+  implicit val random = JSimulationScenario.getRandom()
 
   private def intToServerAddress(i: Int): Address = {
     try {
-      NetAddress(InetAddress.getByName("192.193.0." + i), 45678);
+      NetAddress(InetAddress.getByName("192.193.0." + i), 45678)
     } catch {
-      case ex: UnknownHostException => throw new RuntimeException(ex);
+      case ex: UnknownHostException => throw new RuntimeException(ex)
     }
   }
   private def intToClientAddress(i: Int): Address = {
     try {
-      NetAddress(InetAddress.getByName("192.193.1." + i), 45678);
+      NetAddress(InetAddress.getByName("192.193.1." + i), 45678)
     } catch {
-      case ex: UnknownHostException => throw new RuntimeException(ex);
+      case ex: UnknownHostException => throw new RuntimeException(ex)
     }
   }
 
-  private def isBootstrap(self: Int): Boolean = self == 1;
+  private def isBootstrap(self: Int): Boolean = self == 1
 
   val startServerOp = Op { (self: Integer) =>
 
@@ -104,22 +121,21 @@ object SimpleScenario {
       Map(
         "id2203.project.address" -> selfAddr,
         "id2203.project.bootstrap-address" -> intToServerAddress(1))
-    };
-    StartNode(selfAddr, Init.none[ParentComponent], conf);
-  };
+    }
+    StartNode(selfAddr, Init.none[ParentComponent], conf)
+  }
 
   val startClientOp = Op { (self: Integer) =>
     val selfAddr = intToClientAddress(self)
     val conf = Map(
       "id2203.project.address" -> selfAddr,
-      "id2203.project.bootstrap-address" -> intToServerAddress(1));
-    StartNode(selfAddr, Init.none[ScenarioClient], conf);
-  };
+      "id2203.project.bootstrap-address" -> intToServerAddress(1))
+    StartNode(selfAddr, Init.none[ScenarioClient], conf)
+  }
 
   def scenario(servers: Int): JSimulationScenario = {
-
-    val startCluster = raise(servers, startServerOp, 1.toN).arrival(constant(1.second));
-    val startClients = raise(1, startClientOp, 1.toN).arrival(constant(1.second));
+    val startCluster = raise(servers, startServerOp, 1.toN).arrival(constant(1.second))
+    val startClients = raise(1, startClientOp, 1.toN).arrival(constant(1.second))
 
     startCluster andThen
       10.seconds afterTermination startClients andThen

@@ -39,10 +39,12 @@ class ScenarioClient extends ComponentDefinition {
   //******* Ports ******
   val net = requires[Network]
   val timer = requires[Timer]
+
   //******* Fields ******
   val self = cfg.getValue[NetAddress]("id2203.project.address")
   val server = cfg.getValue[NetAddress]("id2203.project.bootstrap-address")
   private val pending = mutable.Map.empty[UUID, String]
+
   //******* Handlers ******
   ctrl uponEvent {
     case _: Start => handle {
@@ -62,7 +64,7 @@ class ScenarioClient extends ComponentDefinition {
     case NetMessage(header, or @ OpResponse(id, status, value)) => handle {
       logger.debug(s"Got OpResponse: $or")
       pending.remove(id) match {
-        case Some(key) => SimulationResult += (key -> status.toString())
+        case Some(key) => SimulationResult += (key -> s"[${status.toString()}]: $value")
         case None      => logger.warn("ID $id was not pending! Ignoring response.")
       }
     }

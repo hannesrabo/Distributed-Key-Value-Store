@@ -5,16 +5,17 @@ import se.kth.id2203.consensus.{BallotLeaderElection, GossipLeaderElection, Sequ
 import se.kth.id2203.kvstore.KVService
 import se.kth.id2203.networking.NetAddress
 import se.kth.id2203.overlay.{LookupTable, Routing}
+import se.sics.kompics.Component
 import se.sics.kompics.network.Network
-import se.sics.kompics.sl.{ComponentDefinition, Init, handle}
+import se.sics.kompics.sl.{ComponentDefinition, Init, PositivePort, handle}
 import se.sics.kompics.timer.Timer
 
 class KVParent extends ComponentDefinition {
 
-  val boot = requires(Bootstrapping)
-  val net = requires[Network]
-  val timer = requires[Timer]
-  val overlay = requires(Routing)
+  val boot: PositivePort[Bootstrapping.type] = requires(Bootstrapping)
+  val net: PositivePort[Network] = requires[Network]
+  val timer: PositivePort[Timer] = requires[Timer]
+  val overlay: PositivePort[Routing.type] = requires(Routing)
 
   boot uponEvent {
     case Booted(assignment: LookupTable) => handle {
@@ -34,7 +35,7 @@ class KVParent extends ComponentDefinition {
       connect[Network](net -> consensus)
 
       // KV (the actual thing)
-      connect(Routing)(overlay -> kv)
+      connect(Routing)(overlay.asInstanceOf[Component] -> kv)
       connect[Network](net -> kv)
       connect[SequenceConsensus](consensus -> kv)
     }
