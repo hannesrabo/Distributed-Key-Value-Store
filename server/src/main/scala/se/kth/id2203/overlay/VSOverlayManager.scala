@@ -64,7 +64,7 @@ class VSOverlayManager(init: Init[VSOverlayManager]) extends ComponentDefinition
     case GetInitialAssignments(nodes) => handle {
       log.info("Generating LookupTable...");
       val lut = LookupTable.generate(nodes);
-      logger.debug("Generated assignments:\n$lut");
+      logger.debug(s"Generated assignments:\n$lut");
       trigger(new InitialAssignments(lut) -> boot);
     }
     case Booted(assignment: LookupTable) => handle {

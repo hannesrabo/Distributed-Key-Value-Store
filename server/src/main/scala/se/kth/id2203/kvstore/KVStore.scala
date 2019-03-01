@@ -23,7 +23,7 @@
  */
 package se.kth.id2203.kvstore
 
-import se.kth.id2203.consensus.{RSM_Command, SC_Propose, SequenceConsensus}
+import se.kth.id2203.consensus.{RSM_Command, SC_Decide, SC_Propose, SequenceConsensus}
 import se.kth.id2203.networking._
 import se.kth.id2203.overlay.Routing
 import se.sics.kompics.sl._
@@ -61,23 +61,23 @@ class KVService extends ComponentDefinition {
 
   // The decided upon messages
   consensus uponEvent {
-    case ProposedOperation(sender: NetAddress, command: Op) => handle {
+    case SC_Decide(ProposedOperation(sender: NetAddress, command: Op)) => handle {
       log.info(s"(Not) Handling operation {}!", command)
-      trigger(NetMessage(self, sender, command.response(OpCode.Ok)) -> net)
+      trigger(NetMessage(self, sender, command.response(OpCode.NotImplemented)) -> net)
     }
 
-    case ProposedOperation(sender: NetAddress, command: Read) => handle {
+    case SC_Decide(ProposedOperation(sender: NetAddress, command: Read)) => handle {
       log.info(s"Handling operation {}!", command)
       trigger(NetMessage(self, sender, command.response(OpCode.Ok, storage.get(command.key))) -> net)
     }
 
-    case ProposedOperation(sender: NetAddress, command: Write) => handle {
+    case SC_Decide(ProposedOperation(sender: NetAddress, command: Write)) => handle {
       log.info(s"Handling operation {}!", command)
       storage += (command.key -> command.value)
       trigger(NetMessage(self, sender, command.response(OpCode.Ok)) -> net)
     }
 
-    case ProposedOperation(sender: NetAddress, command: CompareAndSwap) => handle {
+    case SC_Decide(ProposedOperation(sender: NetAddress, command: CompareAndSwap)) => handle {
       log.info(s"Handling operation {}!", command)
       val result = storage.get(command.key) match {
         case Some(value) => {

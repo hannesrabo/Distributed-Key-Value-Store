@@ -25,15 +25,18 @@ package se.kth.id2203.overlay
 
 ;
 
-import com.larskroll.common.collections._;
-import java.util.Collection;
-import se.kth.id2203.bootstrapping.NodeAssignment;
-import se.kth.id2203.networking.NetAddress;
+import com.larskroll.common.collections._
+import java.util.Collection
+
+import se.kth.id2203.bootstrapping.NodeAssignment
+import se.kth.id2203.networking.NetAddress
+
+import scala.collection.mutable;
 
 @SerialVersionUID(0x57bdfad1eceeeaaeL)
 class LookupTable extends NodeAssignment with Serializable {
 
-  val NR_PARTITIONS = 6
+  val NR_PARTITIONS = 2
 
   val partitions = TreeSetMultiMap.empty[Int, NetAddress]
 
@@ -69,17 +72,13 @@ class LookupTable extends NodeAssignment with Serializable {
 object LookupTable {
   def generate(nodes: Set[NetAddress]): LookupTable = {
     val lut = new LookupTable()
-    val partitionSize: Int = Int.MaxValue / lut.NR_PARTITIONS;
-    val partitionNodeSize: Int = nodes.size / lut.NR_PARTITIONS;
-    val partitionedNodes: List[List[NetAddress]] = (nodes.toList.grouped(partitionNodeSize)).toList
+    val keySpaceSize: Int = Int.MaxValue / lut.NR_PARTITIONS
 
-    var i = 0
-    partitionedNodes.foreach(nodes => {
-      println(nodes)
-      val currentFloor = i
-      i += partitionSize
-      lut.partitions ++= (currentFloor -> nodes.toSet)
-    })
+    val indexedNodes = nodes.zipWithIndex
+
+    for ((node, index) <- indexedNodes) {
+        lut.partitions += ((index % lut.NR_PARTITIONS) * keySpaceSize -> node)
+    }
 
     lut
   }

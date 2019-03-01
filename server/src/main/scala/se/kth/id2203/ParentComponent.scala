@@ -52,17 +52,17 @@ class ParentComponent extends ComponentDefinition {
     val gossipLeaderElection = create(classOf[GossipLeaderElection], Init[GossipLeaderElection](self, topology))
 
     // BallotLeaderElection (for paxos)
-    connect[Timer](timer -> gossipLeaderElection)
-    connect[Network](net -> gossipLeaderElection)
-
-    // Paxos
-    connect[BallotLeaderElection](gossipLeaderElection -> consensus)
-    connect[Network](net -> consensus)
+//    connect[Timer](timer -> gossipLeaderElection)
+//    connect[Network](net -> gossipLeaderElection)
+//
+//    // Paxos
+//    connect[BallotLeaderElection](gossipLeaderElection -> consensus)
+//    connect[Network](net -> consensus)
 
     // KV (the actual thing)
     connect(Routing)(overlay -> kv)
     connect[Network](net -> kv)
-    connect[SequenceConsensus](consensus -> kv)
+//    connect[SequenceConsensus](consensus -> kv)
   }
 
   val overlay = create(classOf[VSOverlayManager], Init[VSOverlayManager](afterBoot))
