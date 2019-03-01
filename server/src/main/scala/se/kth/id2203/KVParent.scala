@@ -1,15 +1,42 @@
 package se.kth.id2203
 
+import se.kth.id2203.bootstrapping.{Booted, Bootstrapping}
+import se.kth.id2203.consensus.{BallotLeaderElection, GossipLeaderElection, SequenceConsensus, SequencePaxos}
+import se.kth.id2203.kvstore.KVService
 import se.kth.id2203.networking.NetAddress
-import se.sics.kompics.sl.{ComponentDefinition, MatchedHandler}
+import se.kth.id2203.overlay.{LookupTable, Routing}
+import se.sics.kompics.network.Network
+import se.sics.kompics.sl.{ComponentDefinition, Init, handle}
+import se.sics.kompics.timer.Timer
 
 class KVParent extends ComponentDefinition {
 
-  val kvBootPort = provides[KVBootPort]
+  val boot = requires(Bootstrapping)
+  val net = requires[Network]
+  val timer = requires[Timer]
+  val overlay = requires(Routing)
 
-  kvBootPort uponEvent {
-    case KV_Boot(topology: Set[NetAddress]) => handle {
+  boot uponEvent {
+    case Booted(assignment: LookupTable) => handle {
+      val self = cfg.getValue[NetAddress]("id2203.project.address")
+      val topology = assignment.lookupSelf(self)
 
+      val kv = create(classOf[KVService], Init.NONE)
+      val consensus = create(classOf[SequencePaxos], Init[SequencePaxos](self, topology))
+      val gossipLeaderElection = create(classOf[GossipLeaderElection], Init[GossipLeaderElection](self, topology))
+
+      // BallotLeaderElection (for paxos)
+      connect[Timer](timer -> gossipLeaderElection)
+      connect[Network](net -> gossipLeaderElection)
+
+      // Paxos
+      connect[BallotLeaderElection](gossipLeaderElection -> consensus)
+      connect[Network](net -> consensus)
+
+      // KV (the actual thing)
+      connect(Routing)(overlay -> kv)
+      connect[Network](net -> kv)
+      connect[SequenceConsensus](consensus -> kv)
     }
   }
 }

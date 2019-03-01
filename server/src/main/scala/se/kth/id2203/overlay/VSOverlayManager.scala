@@ -43,7 +43,7 @@ import util.Random;
   *
   * @author Lars Kroll <lkroll@kth.se>
   */
-class VSOverlayManager(init: Init[VSOverlayManager]) extends ComponentDefinition {
+class VSOverlayManager extends ComponentDefinition {
 
   //******* Ports ******
   val route = provides(Routing);
@@ -55,10 +55,6 @@ class VSOverlayManager(init: Init[VSOverlayManager]) extends ComponentDefinition
   val self = cfg.getValue[NetAddress]("id2203.project.address");
   private var lut: Option[LookupTable] = None;
 
-  val (afterBoot) = init match {
-    case Init(afterBoot) => (afterBoot)
-  }
-
   //******* Handlers ******
   boot uponEvent {
     case GetInitialAssignments(nodes) => handle {
@@ -69,8 +65,6 @@ class VSOverlayManager(init: Init[VSOverlayManager]) extends ComponentDefinition
     }
     case Booted(assignment: LookupTable) => handle {
       log.info("Got NodeAssignment, overlay ready.");
-      val topology = assignment.lookupSelf(self)
-      afterBoot(topology)
       lut = Some(assignment);
     }
   }
