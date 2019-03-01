@@ -38,15 +38,15 @@ case class Op(key: String, id: UUID = UUID.randomUUID()) extends Operation with 
 }
 
 case class Read(key: String, id: UUID = UUID.randomUUID()) extends Operation with Serializable {
-  def response(status: OpCode.OpCode, value: Option[AnyVal]): OpResponse = OpResponse(id, status, value)
+  def response(status: OpCode.OpCode, value: Option[String]): OpResponse = OpResponse(id, status, value)
 }
 
-case class Write(key: String, value: AnyVal, id: UUID = UUID.randomUUID()) extends Operation with Serializable {
+case class Write(key: String, value: String, id: UUID = UUID.randomUUID()) extends Operation with Serializable {
   def response(status: OpCode.OpCode): OpResponse = OpResponse(id, status, None)
 }
 
-case class CompareAndSwap(key: String, value: AnyVal, expected: Option[AnyVal], id: UUID = UUID.randomUUID()) extends Operation with Serializable {
-  def response(status: OpCode.OpCode, value: Option[AnyVal]): OpResponse = OpResponse(id, status, value)
+case class CompareAndSwap(key: String, value: String, expected: Option[String], id: UUID = UUID.randomUUID()) extends Operation with Serializable {
+  def response(status: OpCode.OpCode, value: Option[String]): OpResponse = OpResponse(id, status, value)
 }
 
 object OpCode {
@@ -64,9 +64,9 @@ trait OperationResponse extends KompicsEvent {
 
   def status: OpCode.OpCode
 
-  def value: Option[AnyVal]
+  def value: Option[String]
 }
 
 @SerialVersionUID(0x0227a2aea45e5e75L)
-case class OpResponse(id: UUID, status: OpCode.OpCode, value: Option[AnyVal]) extends OperationResponse with Serializable;
+case class OpResponse(id: UUID, status: OpCode.OpCode, value: Option[String]) extends OperationResponse with Serializable;
 

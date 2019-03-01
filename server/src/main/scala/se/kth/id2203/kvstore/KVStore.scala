@@ -49,7 +49,7 @@ class KVService extends ComponentDefinition {
 
   //******* Fields ******
   private val self = cfg.getValue[NetAddress]("id2203.project.address")
-  private val storage = mutable.Map.empty[String, AnyVal]
+  private val storage = mutable.Map.empty[String, String]
 
   //******* Handlers ******
   net uponEvent {
