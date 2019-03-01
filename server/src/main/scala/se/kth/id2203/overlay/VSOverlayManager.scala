@@ -46,7 +46,7 @@ import util.Random;
 class VSOverlayManager extends ComponentDefinition {
 
   //******* Ports ******
-  val route = provides(Routing);
+  val route = provides[Routing];
   val boot = requires(Bootstrapping);
   val net = requires[Network];
   val timer = requires[Timer];

@@ -43,7 +43,7 @@ class KVService extends ComponentDefinition {
 
   //******* Ports ******
   val net: PositivePort[Network] = requires[Network]
-  val route: PositivePort[Routing.type] = requires(Routing)
+  val route: PositivePort[Routing] = requires[Routing]
   val consensus = requires[SequenceConsensus]
 
 

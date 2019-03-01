@@ -59,6 +59,6 @@ class ParentComponent extends ComponentDefinition {
     connect(Bootstrapping)(boot -> kvParent)
     connect[Timer](timer -> kvParent)
     connect[Network](net -> kvParent)
-    connect(Routing)(overlay -> kvParent)
+    connect[Routing](overlay -> kvParent)
   }
 }

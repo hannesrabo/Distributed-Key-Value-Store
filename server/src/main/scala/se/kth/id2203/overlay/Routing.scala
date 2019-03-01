@@ -2,6 +2,6 @@ package se.kth.id2203.overlay
 
 import se.sics.kompics.sl._
 
-object Routing extends Port {
+class Routing extends Port {
   request[RouteMsg]
 }
