@@ -5,7 +5,7 @@ import se.kth.id2203.consensus.{BallotLeaderElection, GossipLeaderElection, Sequ
 import se.kth.id2203.kvstore.KVService
 import se.kth.id2203.networking.NetAddress
 import se.kth.id2203.overlay.{LookupTable, Routing}
-import se.sics.kompics.Component
+import se.sics.kompics.{Component, Kompics, Start}
 import se.sics.kompics.network.Network
 import se.sics.kompics.sl.{ComponentDefinition, Init, PositivePort, handle}
 import se.sics.kompics.timer.Timer
@@ -24,6 +24,10 @@ class KVParent extends ComponentDefinition {
       val kv = create(classOf[KVService], Init.NONE)
       val consensus = create(classOf[SequencePaxos], Init[SequencePaxos](self, topology))
       val gossipLeaderElection = create(classOf[GossipLeaderElection], Init[GossipLeaderElection](self, topology))
+
+      trigger(new Start() -> kv.control())
+      trigger(new Start() -> consensus.control())
+      trigger(new Start() -> gossipLeaderElection.control())
 
       // BallotLeaderElection (for paxos)
       connect[Timer](timer -> gossipLeaderElection)
