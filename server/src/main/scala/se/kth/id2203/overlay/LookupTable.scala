@@ -49,10 +49,8 @@ class LookupTable extends NodeAssignment with Serializable {
     return partitions(partition)
   }
 
-  def lookupSelf(self: NetAddress): Iterable[NetAddress] = {
-//    partitions.iterator.toList.map(_._2).find(_.contains(self)).getOrElse(Set.empty[NetAddress]);
-
-    Set.empty[NetAddress]
+  def lookupSelf(self: NetAddress): Set[NetAddress] = {
+    partitions.iterator.toList.map(_._2).find(_.contains(self)).getOrElse(Set.empty[NetAddress]).toSet
   }
 
   def getNodes(): Set[NetAddress] = partitions.foldLeft(Set.empty[NetAddress]) {
@@ -77,7 +75,7 @@ object LookupTable {
     val indexedNodes = nodes.zipWithIndex
 
     for ((node, index) <- indexedNodes) {
-        lut.partitions += ((index % lut.NR_PARTITIONS) * keySpaceSize -> node)
+      lut.partitions += ((index % lut.NR_PARTITIONS) * keySpaceSize -> node)
     }
 
     lut
