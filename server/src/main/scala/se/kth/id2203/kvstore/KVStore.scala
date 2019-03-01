@@ -43,7 +43,6 @@ class KVService extends ComponentDefinition {
 
   //******* Ports ******
   val net: PositivePort[Network] = requires[Network]
-  val route: PositivePort[Routing] = requires[Routing]
   val consensus = requires[SequenceConsensus]
 
 
@@ -53,9 +52,14 @@ class KVService extends ComponentDefinition {
 
   //******* Handlers ******
   net uponEvent {
-    case NetMessage(header, op: Operation) => handle {
+//    case NetMessage(header, op: Operation) => handle {
+//      log.info("Got operation {}!", op)
+//      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
+//    }
+    case NetMessage(header, op: Op) => handle {
       log.info("Got operation {}!", op)
-      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
+//      trigger(NetMessage(self, header.src, op.response(OpCode.NotImplemented)) -> net)
+//      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
     }
   }
 

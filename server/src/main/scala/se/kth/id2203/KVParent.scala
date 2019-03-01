@@ -15,7 +15,6 @@ class KVParent extends ComponentDefinition {
   val boot: PositivePort[Bootstrapping.type] = requires(Bootstrapping)
   val net: PositivePort[Network] = requires[Network]
   val timer: PositivePort[Timer] = requires[Timer]
-  val overlay: PositivePort[Routing] = requires[Routing]
 
   boot uponEvent {
     case Booted(assignment: LookupTable) => handle {
@@ -35,7 +34,6 @@ class KVParent extends ComponentDefinition {
       connect[Network](net -> consensus)
 
       // KV (the actual thing)
-      connect[Routing](overlay -> kv)
       connect[Network](net -> kv)
       connect[SequenceConsensus](consensus -> kv)
     }
