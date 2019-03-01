@@ -20,7 +20,7 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
   val timer = requires[Timer]
 
   val (self, topology) = init match {
-    case Init(self: NetAddress, topology: List[NetAddress]@unchecked) => (self, topology)
+    case Init(self: NetAddress, topology: Set[NetAddress]@unchecked) => (self, topology)
   }
 
   // TODO: Someone sets "id2203.project.keepAlivePeriod". Maybe use it instead?
