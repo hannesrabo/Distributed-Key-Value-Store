@@ -2,6 +2,7 @@ package se.kth.id2203
 
 import se.kth.id2203.bootstrapping.{Booted, Bootstrapping}
 import se.kth.id2203.consensus.{BallotLeaderElection, GossipLeaderElection, SequenceConsensus, SequencePaxos}
+import se.kth.id2203.epfd.{EPFD, EventuallyPerfectFailureDetector}
 import se.kth.id2203.kvstore.KVService
 import se.kth.id2203.networking.NetAddress
 import se.kth.id2203.overlay.{LookupTable, Routing}
@@ -24,10 +25,16 @@ class KVParent extends ComponentDefinition {
       val kv = create(classOf[KVService], Init.NONE)
       val consensus = create(classOf[SequencePaxos], Init[SequencePaxos](self, topology))
       val gossipLeaderElection = create(classOf[GossipLeaderElection], Init[GossipLeaderElection](self, topology))
+      val epfd = create(classOf[EPFD], Init[EPFD](self, topology))
 
       trigger(new Start() -> kv.control())
       trigger(new Start() -> consensus.control())
       trigger(new Start() -> gossipLeaderElection.control())
+      trigger(new Start() -> epfd.control())
+
+      // EPFD
+      connect[Timer](timer -> epfd)
+      connect[Network](net -> epfd)
 
       // BallotLeaderElection (for paxos)
       connect[Timer](timer -> gossipLeaderElection)
@@ -40,6 +47,7 @@ class KVParent extends ComponentDefinition {
       // KV (the actual thing)
       connect[Network](net -> kv)
       connect[SequenceConsensus](consensus -> kv)
+      connect[EventuallyPerfectFailureDetector](epfd -> kv)
     }
   }
 }

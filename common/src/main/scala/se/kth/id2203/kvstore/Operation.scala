@@ -26,26 +26,27 @@ package se.kth.id2203.kvstore
 import java.util.UUID;
 import se.sics.kompics.KompicsEvent;
 
-trait Operation extends KompicsEvent {
+trait Operation extends KompicsEvent with Serializable {
   def id: UUID
-
   def key: String
+
+  def response(status: OpCode.OpCode): OpResponse = OpResponse(id, status, None)
 }
 
 @SerialVersionUID(0xfacc6612da2139eaL)
-case class Op(key: String, id: UUID = UUID.randomUUID()) extends Operation with Serializable {
-  def response(status: OpCode.OpCode): OpResponse = OpResponse(id, status, None)
+case class Op(key: String, id: UUID = UUID.randomUUID()) extends Operation {
+  override def response(status: OpCode.OpCode): OpResponse = OpResponse(id, status, None)
 }
 
-case class Read(key: String, id: UUID = UUID.randomUUID()) extends Operation with Serializable {
+case class Read(key: String, id: UUID = UUID.randomUUID()) extends Operation {
   def response(status: OpCode.OpCode, value: Option[String]): OpResponse = OpResponse(id, status, value)
 }
 
-case class Write(key: String, value: String, id: UUID = UUID.randomUUID()) extends Operation with Serializable {
-  def response(status: OpCode.OpCode): OpResponse = OpResponse(id, status, None)
+case class Write(key: String, value: String, id: UUID = UUID.randomUUID()) extends Operation {
+  override def response(status: OpCode.OpCode): OpResponse = OpResponse(id, status, None)
 }
 
-case class CompareAndSwap(key: String, value: String, expected: Option[String], id: UUID = UUID.randomUUID()) extends Operation with Serializable {
+case class CompareAndSwap(key: String, value: String, expected: Option[String], id: UUID = UUID.randomUUID()) extends Operation {
   def response(status: OpCode.OpCode, value: Option[String]): OpResponse = OpResponse(id, status, value)
 }
 
@@ -57,6 +58,8 @@ object OpCode {
   case object NotFound extends OpCode
 
   case object NotImplemented extends OpCode
+
+  case object NotAvailable extends OpCode
 }
 
 trait OperationResponse extends KompicsEvent {
