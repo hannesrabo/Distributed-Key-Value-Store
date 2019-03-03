@@ -24,10 +24,10 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
   }
 
   // TODO: Someone sets "id2203.project.keepAlivePeriod". Maybe use it instead?
-  private val delta = 5
+  private val delta = 10
+  private var period = 1000
   private val ballotOne = 0x0100000000l
   private val ballots = mutable.Map.empty[NetAddress, Long]
-  private var period = 5
   private var round = 0l
   private var ballot = ballotFromNAddress(0, self)
   private var leader: Option[(Long, NetAddress)] = None

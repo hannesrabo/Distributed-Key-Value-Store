@@ -74,10 +74,13 @@ class VSOverlayManager extends ComponentDefinition {
       // Get the nodes for this key
       val nodes = lut.get.lookup(key);
       assert(!nodes.isEmpty);
-      val i = Random.nextInt(nodes.size);
-      val target = nodes.drop(i).head;
-      log.info(s"Forwarding message for key $key to $target");
-      trigger(NetMessage(header.src, target, msg) -> net);
+      //      val i = Random.nextInt(nodes.size);
+      //      val target = nodes.drop(i).head;
+      log.info(s"Forwarding message for key $key to $nodes");
+      nodes.foreach(node => {
+        trigger(NetMessage(header.src, node, msg) -> net);
+      })
+
     }
     case NetMessage(header, msg: Connect) => handle {
       lut match {

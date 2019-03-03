@@ -112,6 +112,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         trigger(NetMessage(self, header.src, Promise(np, na, sfx, ld)) -> net)
       }
     }
+
     case NetMessage(header, Promise(n, na, sfxa, lda)) => handle {
       if ((n == nL) && (state == (LEADER, PREPARE))) {
 
@@ -119,8 +120,10 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         acks += (header.src -> (na, sfxa))
         lds += (header.src -> lda)
         // If we have a majority
-        if (acks.size == Math.ceil((pi.size + 1) / 2).toInt) {
+        println("s: ", acks.size, " ceil: ", Math.ceil((pi.size + 1) / 2).toInt)
+        if (acks.size >= Math.ceil((pi.size + 1) / 2).toInt) {
           // We can drop the key and then drop the round
+          println("True!");
           val sfx = acks.values.maxBy(_._1)._2
 
           // Create the new accepted history
@@ -164,7 +167,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
     case NetMessage(_, Decide(l, nL)) => handle {
       if (nProm == nL) {
         while (ld < l) {
-          trigger(SC_Decide(va(ld)) -> sequenceConsensus);
+          trigger(SC_Decide(va(ld)) -> sequenceConsensus)
           ld = ld + 1
         }
       }

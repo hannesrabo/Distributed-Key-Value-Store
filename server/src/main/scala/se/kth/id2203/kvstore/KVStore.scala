@@ -52,14 +52,13 @@ class KVService extends ComponentDefinition {
 
   //******* Handlers ******
   net uponEvent {
-//    case NetMessage(header, op: Operation) => handle {
-//      log.info("Got operation {}!", op)
-//      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
-//    }
+    case NetMessage(header, op: Operation) => handle {
+      log.info("Got operation {}!", op)
+      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
+    }
     case NetMessage(header, op: Op) => handle {
       log.info("Got operation {}!", op)
-//      trigger(NetMessage(self, header.src, op.response(OpCode.NotImplemented)) -> net)
-//      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
+      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
     }
   }
 
