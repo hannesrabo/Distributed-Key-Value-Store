@@ -64,7 +64,7 @@ class ClientConsole(val service: ClientService) extends CommandConsole with Pars
     out.println("Read operation sent! Awaiting response...");
     try {
       val r = Await.result(fr, 5.seconds);
-      out.println("Operation complete! Response was: " + r.status);
+      out.println("Operation complete! Response was: " + r.status + ", " + key + ":" + r.value);
     } catch {
       case e: Throwable => logger.error("Error during op.", e);
     }
@@ -92,7 +92,7 @@ class ClientConsole(val service: ClientService) extends CommandConsole with Pars
     out.println("Compare and swap operation sent! Awaiting response...");
     try {
       val r = Await.result(fr, 5.seconds);
-      out.println("Operation complete! Response was: " + r.status);
+      out.println("Operation complete! Response was: " + r.status + ", " + key + ":" + r.value);
     } catch {
       case e: Throwable => logger.error("Error during op.", e);
     }

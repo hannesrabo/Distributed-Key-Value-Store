@@ -85,7 +85,7 @@ class VSOverlayManager extends ComponentDefinition {
     case NetMessage(header, msg: Connect) => handle {
       lut match {
         case Some(l) => {
-          log.debug("Accepting connection request from ${header.src}");
+          log.debug(s"Accepting connection request from ${header.src}");
           val size = l.getNodes().size;
           trigger(NetMessage(self, header.src, msg.ack(size)) -> net);
         }
