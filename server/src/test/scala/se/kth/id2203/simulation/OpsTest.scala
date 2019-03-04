@@ -62,21 +62,21 @@ class OpsTest extends FlatSpec with Matchers {
   }
 
 
-//  "Write then Read" should "read the writen value" in { // well of course eventually they should be implemented^^
-//    val seed = 123l
-//    JSimulationScenario.setSeed(seed)
-//    val simpleBootScenario = SimpleScenario.scenario(3)
-//    val res = SimulationResultSingleton.getInstance()
-//
-//    SimulationResult += ("operations" -> "ReadWrite")
-//    SimulationResult += ("nMessages" -> nMessages)
-//
-//    simpleBootScenario.simulate(classOf[LauncherComp])
-//
-//    for (i <- 0 to nMessages) {
-//      SimulationResult.get[(String, String)](s"test$i") should be(Some(("Ok", s"$i")))
-//    }
-//  }
+  "Write then Read" should "read the writen value" in { // well of course eventually they should be implemented^^
+    val seed = 123l
+    JSimulationScenario.setSeed(seed)
+    val simpleBootScenario = SimpleScenario.scenario(3)
+    val res = SimulationResultSingleton.getInstance()
+
+    SimulationResult += ("operations" -> "ReadWrite")
+    SimulationResult += ("nMessages" -> nMessages)
+
+    simpleBootScenario.simulate(classOf[LauncherComp])
+
+    for (i <- 0 to nMessages) {
+      SimulationResult.get[String](s"test$i") should be(Some((s"$i")))
+    }
+  }
 
 }
 

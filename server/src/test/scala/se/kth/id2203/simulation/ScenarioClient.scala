@@ -64,8 +64,6 @@ class ScenarioClient extends ComponentDefinition {
         }
       }
 
-
-
       sendMessage()
     }
   }
@@ -102,9 +100,10 @@ class ScenarioClient extends ComponentDefinition {
       } else {
         logger.warn("ID $id was not pending! Ignoring response.")
       }
+// Should be here!
+//      if (op_index < Ops.size) {
+//        sendMessage()
+//      }
     }
-//    case msg => handle {
-//      printf(s"msg\n")
-//    }
   }
 }
