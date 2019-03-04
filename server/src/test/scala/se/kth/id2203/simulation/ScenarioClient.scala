@@ -78,7 +78,7 @@ class ScenarioClient extends ComponentDefinition {
     trigger(NetMessage(self, server, routeMsg) -> net)
 
     logger.info("Sending {}", op)
-    SimulationResult += (op.key -> "Sent")
+//    SimulationResult += (op.key -> "Sent")
   }
 
   net uponEvent {
@@ -86,14 +86,21 @@ class ScenarioClient extends ComponentDefinition {
       logger.debug(s"Got OpResponse: $id")
 
       if (pending.isDefined && pending.get.id == id) {
-        SimulationResult += (pending.get.key -> (s"${status.toString()}", value))
+        val valueString = value match {
+          case Some(v) => s"$v";
+          case None => "None";
+        }
+
+        SimulationResult += (pending.get.key -> valueString)
+
+        printf(s"\nSETTING: ${pending.get.key -> valueString}\n")
+
+        if (op_index < Ops.size) {
+          sendMessage()
+        }
 
       } else {
         logger.warn("ID $id was not pending! Ignoring response.")
-      }
-
-      if (op_index < Ops.size) {
-        sendMessage()
       }
     }
 //    case msg => handle {
