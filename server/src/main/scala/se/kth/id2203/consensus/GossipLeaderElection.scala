@@ -23,7 +23,6 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
     case Init(self: NetAddress, topology: Set[NetAddress]@unchecked) => (self, topology)
   }
 
-  // TODO: Someone sets "id2203.project.keepAlivePeriod". Maybe use it instead?
   private val delta = 10
   private var period = 1000
   private val ballotOne = 0x0100000000l

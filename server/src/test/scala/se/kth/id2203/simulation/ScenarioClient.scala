@@ -34,9 +34,6 @@ import se.sics.kompics.network.Network
 import se.sics.kompics.timer.Timer
 import se.sics.kompics.sl.simulator.SimulationResult
 
-import collection.mutable
-import collection.JavaConverters._
-
 class ScenarioClient extends ComponentDefinition {
 
   //******* Ports ******
@@ -67,6 +64,8 @@ class ScenarioClient extends ComponentDefinition {
         }
       }
 
+
+
       sendMessage()
     }
   }
@@ -83,12 +82,8 @@ class ScenarioClient extends ComponentDefinition {
   }
 
   net uponEvent {
-    case NetMessage(header, or @ OpResponse(id, status, value)) => handle {
-      logger.debug(s"Got OpResponse: $or")
-
-      if (op_index < Ops.size) {
-        sendMessage()
-      }
+    case NetMessage(header, OpResponse(id, status, value)) => handle {
+      logger.debug(s"Got OpResponse: $id")
 
       if (pending.isDefined && pending.get.id == id) {
         SimulationResult += (pending.get.key -> (s"${status.toString()}", value))
@@ -96,6 +91,13 @@ class ScenarioClient extends ComponentDefinition {
       } else {
         logger.warn("ID $id was not pending! Ignoring response.")
       }
+
+      if (op_index < Ops.size) {
+        sendMessage()
+      }
     }
+//    case msg => handle {
+//      printf(s"msg\n")
+//    }
   }
 }

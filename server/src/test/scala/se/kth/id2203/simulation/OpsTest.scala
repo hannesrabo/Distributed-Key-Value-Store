@@ -29,36 +29,17 @@ import se.kth.id2203.networking._
 import se.sics.kompics.network.Address
 import java.net.{InetAddress, UnknownHostException}
 
-import se.kth.id2203.kvstore.{Operation, Read, Write}
 import se.sics.kompics.sl._
 import se.sics.kompics.sl.simulator._
 import se.sics.kompics.simulator.{SimulationScenario => JSimulationScenario}
 import se.sics.kompics.simulator.run.LauncherComp
 import se.sics.kompics.simulator.result.SimulationResultSingleton
-import collection.JavaConverters._
 
 import scala.concurrent.duration._
 
 class OpsTest extends FlatSpec with Matchers {
 
   private val nMessages = 10
-
-  //  "Classloader" should "be something" in {
-  //    val cname = classOf[SimulationResultSingleton].getCanonicalName()
-  //    var cl = classOf[SimulationResultSingleton].getClassLoader
-  //    var i = 0
-  //    while (cl != null) {
-  //      val res = try {
-  //        val c = cl.loadClass(cname)
-  //        true
-  //      } catch {
-  //        case t: Throwable => false
-  //      }
-  //      println(s"$i -> ${cl.getClass.getName} has class? $res")
-  //      cl = cl.getParent()
-  //      i -= 1
-  //    }
-  //  }
 
   "Simple Operations" should "not be implemented" in { // well of course eventually they should be implemented^^
     val seed = 123l
@@ -78,21 +59,21 @@ class OpsTest extends FlatSpec with Matchers {
   }
 
 
-  "Write then Read" should "read the writen value" in { // well of course eventually they should be implemented^^
-    val seed = 123l
-    JSimulationScenario.setSeed(seed)
-    val simpleBootScenario = SimpleScenario.scenario(3)
-    val res = SimulationResultSingleton.getInstance()
-
-    SimulationResult += ("operations" -> "ReadWrite")
-    SimulationResult += ("nMessages" -> nMessages)
-
-    simpleBootScenario.simulate(classOf[LauncherComp])
-
-    for (i <- 0 to nMessages) {
-      SimulationResult.get[(String, String)](s"test$i") should be(Some(("Ok", s"$i")))
-    }
-  }
+//  "Write then Read" should "read the writen value" in { // well of course eventually they should be implemented^^
+//    val seed = 123l
+//    JSimulationScenario.setSeed(seed)
+//    val simpleBootScenario = SimpleScenario.scenario(3)
+//    val res = SimulationResultSingleton.getInstance()
+//
+//    SimulationResult += ("operations" -> "ReadWrite")
+//    SimulationResult += ("nMessages" -> nMessages)
+//
+//    simpleBootScenario.simulate(classOf[LauncherComp])
+//
+//    for (i <- 0 to nMessages) {
+//      SimulationResult.get[(String, String)](s"test$i") should be(Some(("Ok", s"$i")))
+//    }
+//  }
 
 }
 
@@ -146,7 +127,7 @@ object SimpleScenario {
     val startClients = raise(1, startClientOp, 1.toN).arrival(constant(1.second))
 
     startCluster andThen
-      10.seconds afterTermination startClients andThen
+      20.seconds afterTermination startClients andThen
       100.seconds afterTermination Terminate
   }
 
