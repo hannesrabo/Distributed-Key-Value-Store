@@ -22,24 +22,26 @@ class E2ETest extends FlatSpec with Matchers {
     *
     * Desc: If process p decides v then v is a sequence of proposed commands (without duplicates)
     * Test: Save all propositions from simulated clients, and ensure that decided sequence only contains propositions without duplicates.
+    *       (Just checking that the sequences are correct from proposed values is enough to test the termination, uniformity and integrity.)
     *
     * ## Uniform Agreement
     * No two processes decide different values
     *
     * Desc: If process p decides u and process q decides v then one is a prefix of the other
-    * Test: ??
+    * Test: (Same as below)
     *
     * ## Integrity
     * Each process can decide at most one value
     *
     * Desc: If process p decides u and later decides v then u is a strict prefix of v
-    * Test: ??
+    * Test: (All nodes gets the same sequence. They are not allowed to retract decided sequences)
     *
     * ## Termination (liveness)
     * Every correct process eventually decides a value
     *
     * Desc: If command C is proposed by a correct process then eventually every correct process decides a sequence containing C
-    * Test: ??
+    * Test: (After a fixed interval, the value is actually decided upon. We just check that all proposed values were decided upon
+    *        at the end of the test)
     */
 
   "Decided values" should "be non duplicate values" in {
