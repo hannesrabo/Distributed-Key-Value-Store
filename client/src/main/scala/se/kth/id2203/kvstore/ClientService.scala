@@ -34,32 +34,32 @@ import se.sics.kompics.timer._;
 import collection.mutable;
 import concurrent.{ Promise, Future };
 
-case class ConnectTimeout(spt: ScheduleTimeout) extends Timeout(spt);
-case class OpWithPromise(op: Operation, promise: Promise[OpResponse] = Promise()) extends KompicsEvent;
+case class ConnectTimeout(spt: ScheduleTimeout) extends Timeout(spt)
+case class OpWithPromise(op: Operation, promise: Promise[OpResponse] = Promise()) extends KompicsEvent
 
 class ClientService extends ComponentDefinition {
 
   //******* Ports ******
-  val timer = requires[Timer];
-  val net = requires[Network];
+  val timer = requires[Timer]
+  val net = requires[Network]
   //******* Fields ******
-  val self = cfg.getValue[NetAddress]("id2203.project.address");
-  val server = cfg.getValue[NetAddress]("id2203.project.bootstrap-address");
-  private var connected: Option[ConnectAck] = None;
-  private var timeoutId: Option[UUID] = None;
-  private val pending = mutable.SortedMap.empty[UUID, Promise[OpResponse]];
+  val self = cfg.getValue[NetAddress]("id2203.project.address")
+  val server = cfg.getValue[NetAddress]("id2203.project.bootstrap-address")
+  private var connected: Option[ConnectAck] = None
+  private var timeoutId: Option[UUID] = None
+  private val pending = mutable.SortedMap.empty[UUID, Promise[OpResponse]]
 
   //******* Handlers ******
   ctrl uponEvent {
     case _: Start => handle {
-      log.debug(s"Starting client on $self. Waiting to connect...");
-      val timeout: Long = (cfg.getValue[Long]("id2203.project.keepAlivePeriod") * 2l);
-      val st = new ScheduleTimeout(timeout);
-      st.setTimeoutEvent(ConnectTimeout(st));
-      trigger (st -> timer);
-      timeoutId = Some(st.getTimeoutEvent().getTimeoutId());
-      trigger(NetMessage(self, server, Connect(timeoutId.get)) -> net);
-      trigger(st -> timer);
+      log.debug(s"Starting client on $self. Waiting to connect...")
+      val timeout: Long = cfg.getValue[Long]("id2203.project.keepAlivePeriod") * 2l
+      val st = new ScheduleTimeout(timeout)
+      st.setTimeoutEvent(ConnectTimeout(st))
+      trigger (st -> timer)
+      timeoutId = Some(st.getTimeoutEvent().getTimeoutId())
+      trigger(NetMessage(self, server, Connect(timeoutId.get)) -> net)
+      trigger(st -> timer)
     }
   }
 
@@ -68,15 +68,15 @@ class ClientService extends ComponentDefinition {
       log.info(s"Client connected to $server, cluster size is $clusterSize");
       if (id != timeoutId.get) {
         log.error("Received wrong response id! System may be inconsistent. Shutting down...");
-        System.exit(1);
+        System.exit(1)
       }
-      connected = Some(ack);
-      val c = new ClientConsole(ClientService.this);
-      val tc = new Thread(c);
-      tc.start();
+      connected = Some(ack)
+      val c = new ClientConsole(ClientService.this)
+      val tc = new Thread(c)
+      tc.start()
     }
     case NetMessage(header, or @ OpResponse(id, status, value)) => handle {
-      log.debug(s"Got OpResponse: $or");
+      log.debug(s"Got OpResponse: $or")
       pending.remove(id) match {
         case Some(promise) => promise.success(or);
         case None          => log.warn(s"ID $id was not pending! Ignoring response.");

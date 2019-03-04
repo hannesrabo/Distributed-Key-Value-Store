@@ -28,11 +28,14 @@ import se.kth.id2203.ParentComponent
 import se.kth.id2203.networking._
 import se.sics.kompics.network.Address
 import java.net.{InetAddress, UnknownHostException}
+
+import se.kth.id2203.kvstore.{Operation, Read, Write}
 import se.sics.kompics.sl._
 import se.sics.kompics.sl.simulator._
 import se.sics.kompics.simulator.{SimulationScenario => JSimulationScenario}
 import se.sics.kompics.simulator.run.LauncherComp
 import se.sics.kompics.simulator.result.SimulationResultSingleton
+import collection.JavaConverters._
 
 import scala.concurrent.duration._
 
@@ -62,11 +65,14 @@ class OpsTest extends FlatSpec with Matchers {
     JSimulationScenario.setSeed(seed)
     val simpleBootScenario = SimpleScenario.scenario(3)
     val res = SimulationResultSingleton.getInstance()
-    SimulationResult += ("messages" -> nMessages)
+
+    SimulationResult += ("operations" -> "NOP")
+    SimulationResult += ("nMessages" -> nMessages)
+
     simpleBootScenario.simulate(classOf[LauncherComp])
     
     for (i <- 0 to nMessages) {
-      SimulationResult.get[String](s"test$i") should be(Some("NotImplemented"))
+      SimulationResult.get[(String, String)](s"test$i") should be(Some(("NotImplemented", None)))
       // of course the correct response should be Success not NotImplemented, but like this the test passes
     }
   }
@@ -77,12 +83,14 @@ class OpsTest extends FlatSpec with Matchers {
     JSimulationScenario.setSeed(seed)
     val simpleBootScenario = SimpleScenario.scenario(3)
     val res = SimulationResultSingleton.getInstance()
-    SimulationResult += ("messages" -> nMessages)
+
+    SimulationResult += ("operations" -> "ReadWrite")
+    SimulationResult += ("nMessages" -> nMessages)
+
     simpleBootScenario.simulate(classOf[LauncherComp])
 
     for (i <- 0 to nMessages) {
-      SimulationResult.get[String](s"test$i") should be(Some("NotImplemented"))
-      // of course the correct response should be Success not NotImplemented, but like this the test passes
+      SimulationResult.get[(String, String)](s"test$i") should be(Some(("Ok", s"$i")))
     }
   }
 

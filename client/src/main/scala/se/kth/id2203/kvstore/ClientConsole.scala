@@ -72,15 +72,15 @@ class ClientConsole(val service: ClientService) extends CommandConsole with Pars
 
   parsed(P("write" ~ " " ~ simpleStr ~ ":" ~ simpleStr), usage = "write <key>:<value>", descr = "Saves <value> for <key>.") { parserVals =>
     val (key, value) = parserVals
-    println(s"WriteOp with $key and $value");
+    println(s"WriteOp with $key and $value")
 
     val fr = service.doOp(Write(key, value))
-    out.println("Write operation sent! Awaiting response...");
+    out.println("Write operation sent! Awaiting response...")
     try {
-      val r = Await.result(fr, 5.seconds);
-      out.println("Operation complete! Response was: " + r.status);
+      val r = Await.result(fr, 5.seconds)
+      out.println("Operation complete! Response was: " + r.status)
     } catch {
-      case e: Throwable => logger.error("Error during op.", e);
+      case e: Throwable => logger.error("Error during op.", e)
     }
   }
 

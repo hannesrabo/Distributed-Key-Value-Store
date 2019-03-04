@@ -120,10 +120,8 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         acks += (header.src -> (na, sfxa))
         lds += (header.src -> lda)
         // If we have a majority
-        println("s: ", acks.size, " ceil: ", Math.ceil((pi.size + 1) / 2).toInt)
         if (acks.size >= Math.ceil((pi.size + 1) / 2).toInt) {
           // We can drop the key and then drop the round
-          println("True!");
           val sfx = acks.values.maxBy(_._1)._2
 
           // Create the new accepted history
