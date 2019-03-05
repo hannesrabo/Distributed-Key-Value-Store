@@ -86,6 +86,8 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
           lds.clear
           acks.clear
           lc = 0
+          // TODO: Should we support groups with only one member?
+          // In that case we should set our state to Leader, Accept
           others.foreach(p =>
             trigger(NetMessage(self, p, Prepare(nL, ld, na)) -> net)
           )
@@ -94,10 +96,37 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
           acks += (l -> (na, va.takeRight(va.size - ld)))
           lds += (self -> ld)
           nProm = nL
+
+          // TODO: This algorithm does not have support for groups with only one
+          // TODO: regardless of this...
+//          if (others.size < 1)
+//            checkMajority // This makes sure we get immediate leadership if we are alone
+
         } else {
           state = (FOLLOWER, state._2)
         }
       }
+    }
+  }
+
+  def checkMajority = {
+    if (acks.size >= Math.ceil((pi.size + 1) / 2).toInt) {
+      printf(s"WAS ELECTED LEADER BY MAJORITY $self\n")
+      // We can drop the key and then drop the round
+      val sfx = acks.values.maxBy(_._1)._2
+
+      // Create the new accepted history
+      va = va.take(ld) ++ sfx ++ propCmds
+
+      las += (self -> va.size) // length of accepted elements
+      propCmds = List.empty
+      state = (LEADER, ACCEPT)
+      pi.filter(p => p != self && lds.contains(p))
+        .foreach(p => {
+          // grab all elements not yet accepted
+          val sfxp = va.takeRight(va.size - lds(p))
+          trigger(NetMessage(self, p, AcceptSync(nL, sfxp, lds(p))) -> net)
+        })
     }
   }
 
@@ -123,23 +152,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         acks += (header.src -> (na, sfxa))
         lds += (header.src -> lda)
         // If we have a majority
-        if (acks.size >= Math.ceil((pi.size + 1) / 2).toInt) {
-          // We can drop the key and then drop the round
-          val sfx = acks.values.maxBy(_._1)._2
-
-          // Create the new accepted history
-          va = va.take(ld) ++ sfx ++ propCmds
-
-          las += (self -> va.size) // length of accepted elements
-          propCmds = List.empty
-          state = (LEADER, ACCEPT)
-          pi.filter(p => p != self && lds.contains(p))
-            .foreach(p => {
-              // grab all elements not yet accepted
-              val sfxp = va.takeRight(va.size - lds(p))
-              trigger(NetMessage(self, p, AcceptSync(nL, sfxp, lds(p))) -> net)
-            })
-        }
+        checkMajority
 
       } else if ((n == nL) && (state == (LEADER, ACCEPT))) {
         // Late answers
@@ -199,6 +212,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         propCmds ++= List(c)
       }
       else if (state == (LEADER, ACCEPT)) {
+        printf(s"INSTANT ACCEPT: $self (has leader $leader)\n");
         va ++= List(c)
         las(self) = las(self) + 1
         pi.filter(p => p != self && lds.contains(p))

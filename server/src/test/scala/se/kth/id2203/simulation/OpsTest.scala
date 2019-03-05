@@ -39,12 +39,13 @@ import scala.concurrent.duration._
 
 class OpsTest extends FlatSpec with Matchers {
 
-  private val nMessages = 9
+  private val nMessages = 20
 
   "Simple Operations" should "not be implemented" in { // well of course eventually they should be implemented^^
     val seed = 123l
     JSimulationScenario.setSeed(seed)
-    val simpleBootScenario = SimpleScenario.scenario(3)
+    // If we have 3 servers, we get one group with only one member which is not supported.
+    val simpleBootScenario = SimpleScenario.scenario(4)
     val res = SimulationResultSingleton.getInstance()
 
     SimulationResult += ("operations" -> "NOP")
@@ -65,7 +66,7 @@ class OpsTest extends FlatSpec with Matchers {
   "Write then Read" should "read the writen value" in { // well of course eventually they should be implemented^^
     val seed = 123l
     JSimulationScenario.setSeed(seed)
-    val simpleBootScenario = SimpleScenario.scenario(3)
+    val simpleBootScenario = SimpleScenario.scenario(4)
     val res = SimulationResultSingleton.getInstance()
 
     SimulationResult += ("operations" -> "ReadWrite")
