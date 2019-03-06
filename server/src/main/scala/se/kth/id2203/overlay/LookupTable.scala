@@ -36,7 +36,7 @@ import scala.collection.mutable;
 @SerialVersionUID(0x57bdfad1eceeeaaeL)
 class LookupTable extends NodeAssignment with Serializable {
 
-  val NR_PARTITIONS = 2
+  val NR_PARTITIONS = 5
 
   val partitions = TreeSetMultiMap.empty[Int, NetAddress]
 
