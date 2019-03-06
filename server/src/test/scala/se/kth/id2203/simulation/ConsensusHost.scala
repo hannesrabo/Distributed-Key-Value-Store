@@ -11,13 +11,13 @@ class ConsensusHost(init: Init[ConsensusHost]) extends ComponentDefinition {
   val net = requires[Network]
   val timer = requires[Timer]
 
-  val (self, pi) = init match {
-    case Init(addr: NetAddress, pi: Set[NetAddress]@unchecked) => (addr, pi)
+  val (self, addr, pi) = init match {
+    case Init(self: Int, addr: NetAddress, pi: Set[NetAddress]@unchecked) => (self, addr, pi)
   }
 
-  val consensus = create(classOf[SequencePaxos], Init[SequencePaxos](self, pi))
+  val consensus = create(classOf[SequencePaxos], Init[SequencePaxos](addr, pi))
   val consensusClient = create(classOf[ConsensusClient], Init[ConsensusClient](self))
-  val gossipLeaderElection = create(classOf[GossipLeaderElection], Init[GossipLeaderElection](self, pi))
+  val gossipLeaderElection = create(classOf[GossipLeaderElection], Init[GossipLeaderElection](addr, pi))
 
   // BallotLeaderElection (for paxos)
   connect[Timer](timer -> gossipLeaderElection)

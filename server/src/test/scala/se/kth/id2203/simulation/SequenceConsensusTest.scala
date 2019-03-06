@@ -17,6 +17,8 @@ import scala.concurrent.duration._
 
 class SequenceConsensusTest extends FlatSpec with Matchers{
 
+  val nServers = 20
+
   /**
     * # Sequence Paxos Properties
     *
@@ -48,14 +50,25 @@ class SequenceConsensusTest extends FlatSpec with Matchers{
     */
 
 
-  "Decided values" should "be non duplicate values" in {
+  // Validity
+  "Decided values" should "be non duplicate and proposed values" in {
     val seed = 123l
     JSimulationScenario.setSeed(seed)
+    val simpleBootScenario = SimpleConsensusScenario.scenario(nServers)
+    val res = SimulationResultSingleton.getInstance()
+
+    simpleBootScenario.simulate(classOf[LauncherComp])
+
+    for (i <- 0 to nServers) {
+      val propositions = SimulationResult.get[List[String]](s"prop:$i")
+      val decisions = SimulationResult.get[List[String]](s"res:$i")
+
+      printf(s"[Node $i]\n\tPropositions:$propositions\n\tDecisions:$decisions\n")
+
+      propositions should be(decisions)
+    }
   }
 
-  "Decided values" should "only contain proposed values" in {
-
-  }
 
 }
 
@@ -76,22 +89,20 @@ object SimpleConsensusScenario {
     }
   }
 
-//  val startServerOp = Op { (self: Integer) =>
-//    val selfAddr = intToAddress(self)
-//    val conf = Map(
-//      "id2203.project.address" -> selfAddr,
-//      "id2203.project.topology" -> topology
-//    )
-//    StartNode(selfAddr, Init.none[], conf)
-//  }
+  val startServerOp = Op { (self: Integer) =>
+    val selfAddr = intToAddress(self)
+    val conf = Map(
+      "id2203.project.address" -> selfAddr,
+      "id2203.project.topology" -> topology
+    )
+    StartNode(selfAddr, Init.apply[ConsensusHost](self.intValue(), selfAddr, topology.toSet), conf)
+  }
 
-//  def scenario(servers: Int): JSimulationScenario = {
-//
-////    val startCluster = raise(servers, startServerOp, 1.toN).arrival(constant(1.second))
-////    val startClients = raise(1, startClientOp, 1.toN).arrival(constant(1.second))
-////
-////    startCluster andThen
-////      10.seconds afterTermination startClients andThen
-////      100.seconds afterTermination Terminate
-//  }
+  def scenario(servers: Int): JSimulationScenario = {
+
+    val startCluster = raise(servers, startServerOp, 1.toN).arrival(uniform(1.second, 10.second))
+
+    startCluster andThen
+      100.seconds afterTermination Terminate
+  }
 }
