@@ -86,7 +86,7 @@ object CrashScenario {
     val conf = Map(
       "id2203.project.address" -> selfAddr,
       "id2203.project.bootstrap-address" -> intToServerAddress(1))
-    StartNode(selfAddr, Init.none[ChattyScenarioClient], conf)
+    StartNode(selfAddr, Init.none[ScenarioClient], conf)
   }
 
   def scenario(servers: Int): JSimulationScenario = {
