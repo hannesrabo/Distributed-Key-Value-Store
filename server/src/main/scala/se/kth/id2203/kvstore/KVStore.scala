@@ -65,7 +65,7 @@ class KVService extends ComponentDefinition {
 
   epfd uponEvent {
     case CorrectSystem() => handle {
-      assert(correctGroup)
+      correctGroup = true
     }
     case FaultySystem() => handle {
       correctGroup = false
