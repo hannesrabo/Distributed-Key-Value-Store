@@ -131,8 +131,8 @@ object SimpleScenario {
     val startClients = raise(1, startClientOp, 1.toN).arrival(constant(1.second))
 
     startCluster andThen
-      20.seconds afterTermination startClients andThen
-      100.seconds afterTermination Terminate
+      100.seconds afterTermination startClients andThen
+      200.seconds afterTermination Terminate
   }
 
 }

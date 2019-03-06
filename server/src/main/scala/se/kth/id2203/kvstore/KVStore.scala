@@ -24,9 +24,7 @@
 package se.kth.id2203.kvstore
 
 import se.kth.id2203.consensus.{RSM_Command, SC_Decide, SC_Propose, SequenceConsensus}
-import se.kth.id2203.epfd.{CorrectSystem, EventuallyPerfectFailureDetector, FaultySystem}
 import se.kth.id2203.networking._
-import se.kth.id2203.overlay.Routing
 import se.sics.kompics.sl._
 import se.sics.kompics.network.Network
 
@@ -45,7 +43,6 @@ class KVService extends ComponentDefinition {
   //******* Ports ******
   val net: PositivePort[Network] = requires[Network]
   val consensus = requires[SequenceConsensus]
-  val epfd = requires[EventuallyPerfectFailureDetector]
 
   //******* Fields ******
   private val self = cfg.getValue[NetAddress]("id2203.project.address")
@@ -56,19 +53,7 @@ class KVService extends ComponentDefinition {
   net uponEvent {
     case NetMessage(header, op: Operation) => handle {
       log.info("Got operation {}!", op)
-      if (correctGroup)
-        trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
-      else
-        trigger(NetMessage(self, header.src, op.response(OpCode.NotAvailable)) -> net)
-    }
-  }
-
-  epfd uponEvent {
-    case CorrectSystem() => handle {
-      correctGroup = true
-    }
-    case FaultySystem() => handle {
-      correctGroup = false
+      trigger(SC_Propose(ProposedOperation(header.src, op)) -> consensus)
     }
   }
 
