@@ -76,14 +76,14 @@ object SimpleConsensusScenario {
     }
   }
 
-  val startServerOp = Op { (self: Integer) =>
-    val selfAddr = intToAddress(self)
-    val conf = Map(
-      "id2203.project.address" -> selfAddr,
-      "id2203.project.topology" -> topology
-    )
-    StartNode(selfAddr, Init.none[ScenarioConsensusParent], conf)
-  }
+//  val startServerOp = Op { (self: Integer) =>
+//    val selfAddr = intToAddress(self)
+//    val conf = Map(
+//      "id2203.project.address" -> selfAddr,
+//      "id2203.project.topology" -> topology
+//    )
+//    StartNode(selfAddr, Init.none[], conf)
+//  }
 
 //  def scenario(servers: Int): JSimulationScenario = {
 //
