@@ -6,6 +6,8 @@ import org.scalatest._
 import se.kth.id2203.ParentComponent
 import se.kth.id2203.networking.NetAddress
 import se.sics.kompics.network.Address
+import se.sics.kompics.simulator.result.SimulationResultSingleton
+import se.sics.kompics.simulator.run.LauncherComp
 import se.sics.kompics.simulator.{SimulationScenario => JSimulationScenario}
 import se.sics.kompics.sl.Init
 import se.sics.kompics.sl.simulator._
@@ -14,47 +16,27 @@ import scala.concurrent.duration._
 
 class E2ETest extends FlatSpec with Matchers {
 
-  /**
-    * # Sequence Paxos Properties
-    *
-    * ## Validity
-    * Only proposed values may be decided
-    *
-    * Desc: If process p decides v then v is a sequence of proposed commands (without duplicates)
-    * Test: Save all propositions from simulated clients, and ensure that decided sequence only contains propositions without duplicates.
-    *       (Just checking that the sequences are correct from proposed values is enough to test the termination, uniformity and integrity.)
-    *
-    * ## Uniform Agreement
-    * No two processes decide different values
-    *
-    * Desc: If process p decides u and process q decides v then one is a prefix of the other
-    * Test: (Same as below)
-    *
-    * ## Integrity
-    * Each process can decide at most one value
-    *
-    * Desc: If process p decides u and later decides v then u is a strict prefix of v
-    * Test: (All nodes gets the same sequence. They are not allowed to retract decided sequences)
-    *
-    * ## Termination (liveness)
-    * Every correct process eventually decides a value
-    *
-    * Desc: If command C is proposed by a correct process then eventually every correct process decides a sequence containing C
-    * Test: (After a fixed interval, the value is actually decided upon. We just check that all proposed values were decided upon
-    *        at the end of the test)
-    */
+  private val nMessages = 20
 
-  "Decided values" should "be non duplicate values" in {
+
+  "System" should "work even though some servers crash" in {
     val seed = 123l
     JSimulationScenario.setSeed(seed)
-  }
+    val simpleBootScenario = SimpleScenario.scenario(20)
+    val res = SimulationResultSingleton.getInstance()
 
-  "Decided values" should "only contain proposed values" in {
+    SimulationResult += ("operations" -> "ReadWrite")
+    SimulationResult += ("nMessages" -> nMessages)
 
+    simpleBootScenario.simulate(classOf[LauncherComp])
+
+    for (i <- 0 to nMessages) {
+      SimulationResult.get[String](s"test$i") should be(Some((s"$i")))
+    }
   }
 }
 
-object RandomScenario {
+object CrashScenario {
 
   import Distributions._
 
@@ -93,6 +75,12 @@ object RandomScenario {
     StartNode(selfAddr, Init.none[ParentComponent], conf)
   }
 
+  val stopServer = Op { (self: Integer) =>
+
+    val selfAddr = intToServerAddress(self)
+    KillNode(selfAddr)
+  }
+
   val startClientOp = Op { (self: Integer) =>
     val selfAddr = intToClientAddress(self)
     val conf = Map(
@@ -103,10 +91,14 @@ object RandomScenario {
 
   def scenario(servers: Int): JSimulationScenario = {
     val startCluster = raise(servers, startServerOp, 1.toN).arrival(constant(1.second))
-    val startClients = raise(1, startClientOp, 1.toN).arrival(constant(1.second))
+    val startClients = raise(1, startClientOp, 1.toN).arrival(constant(3.second))
+    val stopServers = raise(2, stopServer, 4.toN).arrival(constant(1.second))
+    val startMoreClients = raise(2, startClientOp, 2.toN).arrival(uniform(500.millisecond, 1500.millisecond))
 
     startCluster andThen
-      10.seconds afterTermination startClients andThen
-      100.seconds afterTermination Terminate
+      20.seconds afterTermination startClients andThen
+      3.seconds afterTermination stopServers andThen
+      20.seconds afterTermination startMoreClients andThen
+      200.seconds afterTermination Terminate
   }
 }
