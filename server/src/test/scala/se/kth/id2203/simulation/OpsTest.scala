@@ -41,7 +41,7 @@ class OpsTest extends FlatSpec with Matchers {
 
   private val nMessages = 20
 
-  "Simple Operations" should "not be implemented" in {
+  "Simple Operations" should "return None" in {
     val seed = 123l
     JSimulationScenario.setSeed(seed)
     // If we have 3 servers, we get one group with only one member which is not supported.
