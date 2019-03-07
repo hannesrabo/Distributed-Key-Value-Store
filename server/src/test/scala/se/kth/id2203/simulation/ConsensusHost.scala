@@ -16,7 +16,7 @@ class ConsensusHost(init: Init[ConsensusHost]) extends ComponentDefinition {
   }
 
   val consensus = create(classOf[SequencePaxos], Init[SequencePaxos](addr, pi))
-  val consensusClient = create(classOf[ConsensusClient], Init[ConsensusClient](self))
+  val consensusClient = create(classOf[ConsensusClient], Init[ConsensusClient](self, addr, pi))
   val gossipLeaderElection = create(classOf[GossipLeaderElection], Init[GossipLeaderElection](addr, pi))
 
   // BallotLeaderElection (for paxos)
@@ -29,4 +29,6 @@ class ConsensusHost(init: Init[ConsensusHost]) extends ComponentDefinition {
 
   // ConsensusClient
   connect[SequenceConsensus](consensus -> consensusClient)
+  connect[Network](net -> consensusClient)
+  connect[Timer](timer -> consensusClient)
 }

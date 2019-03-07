@@ -71,14 +71,14 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
 
   ballotLeaderElection uponEvent {
     case BLE_Leader(l, n) => handle {
-      printf(s"PROPOSING NEW LEADER: $l [$self] (n: $n, nL: $nL)\n")
-      printf(s"TOPOLOGY: $pi\n")
+//      printf(s"PROPOSING NEW LEADER: $l [$self] (n: $n, nL: $nL)\n")
+//      printf(s"TOPOLOGY: $pi\n")
       if (n > nL) {
         nL = n
         leader = Some(l)
-        printf(s"NEW LEADER: $l [$self] (nL: $nL, nProm: $nProm)\n")
+//        printf(s"NEW LEADER: $l [$self] (nL: $nL, nProm: $nProm)\n")
         if (self == l && nL > nProm) {
-          printf(s"IM THE LEADER [$self]\n")
+//          printf(s"IM THE LEADER [$self]\n")
           // Im a new leader, reset everything
           state = (LEADER, PREPARE)
           propCmds = List.empty
@@ -111,7 +111,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
 
   def checkMajority = {
     if (acks.size >= Math.ceil((pi.size + 1) / 2).toInt) {
-      printf(s"WAS ELECTED LEADER BY MAJORITY $self\n")
+//      printf(s"WAS ELECTED LEADER BY MAJORITY $self\n")
       // We can drop the key and then drop the round
       val sfx = acks.values.maxBy(_._1)._2
 
@@ -208,11 +208,11 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
   sequenceConsensus uponEvent {
     case SC_Propose(c) => handle {
       if (state == (LEADER, PREPARE)) {
-        printf(s"RECEIVING COMMAND: $self (has leader $leader)\n");
+//        printf(s"RECEIVING COMMAND: $self (has leader $leader)\n");
         propCmds ++= List(c)
       }
       else if (state == (LEADER, ACCEPT)) {
-        printf(s"INSTANT ACCEPT: $self (has leader $leader)\n");
+//        printf(s"INSTANT ACCEPT: $self (has leader $leader)\n");
         va ++= List(c)
         las(self) = las(self) + 1
         pi.filter(p => p != self && lds.contains(p))

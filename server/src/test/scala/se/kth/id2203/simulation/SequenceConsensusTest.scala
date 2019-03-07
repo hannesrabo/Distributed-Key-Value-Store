@@ -7,12 +7,14 @@ import se.kth.id2203.ParentComponent
 import se.kth.id2203.networking._
 import se.sics.kompics.network.Address
 import java.net.{InetAddress, UnknownHostException}
+
 import se.sics.kompics.sl._
 import se.sics.kompics.sl.simulator._
 import se.sics.kompics.simulator.{SimulationScenario => JSimulationScenario}
 import se.sics.kompics.simulator.run.LauncherComp
 import se.sics.kompics.simulator.result.SimulationResultSingleton
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 
 class SequenceConsensusTest extends FlatSpec with Matchers{
@@ -59,13 +61,32 @@ class SequenceConsensusTest extends FlatSpec with Matchers{
 
     simpleBootScenario.simulate(classOf[LauncherComp])
 
+    var propositionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
+    var decisionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
     for (i <- 0 to nServers) {
-      val propositions = SimulationResult.get[List[String]](s"prop:$i")
-      val decisions = SimulationResult.get[List[String]](s"res:$i")
+      val propositionsLength: Int = SimulationResult.get[String](s"prop:$i").getOrElse("0").toInt
+      val decisionsLength: Int = SimulationResult.get[String](s"res:$i").getOrElse("0").toInt
 
-      printf(s"[Node $i]\n\tPropositions:$propositions\n\tDecisions:$decisions\n")
+      var buffer = ListBuffer.empty[String]
+      for (j <- 0 to propositionsLength - 1) {
+        val proposition: String = SimulationResult.get[String](s"prop:$i:$j").getOrElse("")
+        buffer += proposition
+      }
+      val propositions: List[String] = buffer.toList
 
-      propositions should be(decisions)
+      buffer = ListBuffer.empty[String]
+      for (j <- 0 to decisionsLength - 1) {
+        val decision: String = SimulationResult.get[String](s"res:$i:$j").getOrElse("")
+        buffer += decision
+      }
+      val decisions = buffer.toList
+
+      propositionMap += (i -> propositions)
+      decisionMap += (i -> decisions)
+
+      printf(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
+
+//      decisionsLength should be(propositionsLength)
     }
   }
 
@@ -79,7 +100,7 @@ object SimpleConsensusScenario {
   implicit val random = JSimulationScenario.getRandom()
 
   val numberOfNodes = 20
-  val topology: List[NetAddress] = (0 to numberOfNodes).toList.map(intToAddress(_))
+  val topology: List[NetAddress] = (0 to numberOfNodes - 1).toList.map(intToAddress(_))
 
   private def intToAddress(i: Int): NetAddress = {
     try {
@@ -100,9 +121,9 @@ object SimpleConsensusScenario {
 
   def scenario(servers: Int): JSimulationScenario = {
 
-    val startCluster = raise(servers, startServerOp, 1.toN).arrival(uniform(1.second, 10.second))
+    val startCluster = raise(servers, startServerOp, 1.toN).arrival(constant(1.second))
 
     startCluster andThen
-      100.seconds afterTermination Terminate
+      1000.seconds afterTermination Terminate
   }
 }
