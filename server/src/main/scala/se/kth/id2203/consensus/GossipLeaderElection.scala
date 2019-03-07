@@ -24,7 +24,7 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
   }
 
   private val delta = 10
-  private var period = 1000
+  private var period = 1500
   private val ballotOne = 0x0100000000l
   private val ballots = mutable.Map.empty[NetAddress, Long]
   private var round = 0l
@@ -43,7 +43,7 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
   }
 
   private def startTimer(delay: Long): Unit = {
-    val scheduledTimeout = new ScheduleTimeout(period)
+    val scheduledTimeout = new ScheduleTimeout(delay)
     scheduledTimeout.setTimeoutEvent(CheckTimeout(scheduledTimeout))
     trigger(scheduledTimeout -> timer)
   }
@@ -75,7 +75,7 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
 
   ctrl uponEvent {
     case _: Start => handle {
-      startTimer(period)
+      startTimer(6000)
     }
   }
 

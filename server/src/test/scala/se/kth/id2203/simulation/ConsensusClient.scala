@@ -31,10 +31,11 @@ class ConsensusClient(init: Init[ConsensusClient]) extends ComponentDefinition {
 
   private val alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   private val size = alpha.length()
+  private val nMessages = 1
 
   private def randStr(n: Int) = (1 to n).map(_ => alpha(Random.nextInt.abs % size)).mkString
 
-  private var proposals: List[String] = (for (i <- 0 to 10) yield randStr(i + 5)).toList
+  private var proposals: List[String] = (for (i <- 0 to nMessages) yield randStr(i + 5)).toList
 
   var count: Int = 0
   def addCommand(command: String): Unit = {

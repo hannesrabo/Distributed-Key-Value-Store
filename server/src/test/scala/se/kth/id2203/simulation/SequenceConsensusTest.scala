@@ -1,4 +1,4 @@
-package se.kth.id2203.simulation
+  package se.kth.id2203.simulation
 
 import java.net.{InetAddress, UnknownHostException}
 
@@ -17,9 +17,9 @@ import se.sics.kompics.simulator.result.SimulationResultSingleton
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
 
-class SequenceConsensusTest extends FlatSpec with Matchers{
+class SequenceConsensusTest extends FlatSpec with Matchers {
 
-  val nServers = 20
+  val nServers = 10
 
   /**
     * # Sequence Paxos Properties
@@ -29,7 +29,7 @@ class SequenceConsensusTest extends FlatSpec with Matchers{
     *
     * Desc: If process p decides v then v is a sequence of proposed commands (without duplicates)
     * Test: Save all propositions from simulated clients, and ensure that decided sequence only contains propositions without duplicates.
-    *       (Just checking that the sequences are correct from proposed values is enough to test the termination, uniformity and integrity.)
+    * (Just checking that the sequences are correct from proposed values is enough to test the termination, uniformity and integrity.)
     *
     * ## Uniform Agreement
     * No two processes decide different values
@@ -48,7 +48,7 @@ class SequenceConsensusTest extends FlatSpec with Matchers{
     *
     * Desc: If command C is proposed by a correct process then eventually every correct process decides a sequence containing C
     * Test: (After a fixed interval, the value is actually decided upon. We just check that all proposed values were decided upon
-    *        at the end of the test)
+    * at the end of the test)
     */
 
 
@@ -63,7 +63,7 @@ class SequenceConsensusTest extends FlatSpec with Matchers{
 
     var propositionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
     var decisionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
-    for (i <- 0 to nServers) {
+    for (i <- 1 to nServers) {
       val propositionsLength: Int = SimulationResult.get[String](s"prop:$i").getOrElse("0").toInt
       val decisionsLength: Int = SimulationResult.get[String](s"res:$i").getOrElse("0").toInt
 
@@ -86,21 +86,21 @@ class SequenceConsensusTest extends FlatSpec with Matchers{
 
       printf(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
 
-//      decisionsLength should be(propositionsLength)
+      //      decisionsLength should be(propositionsLength)
     }
   }
 
 
 }
-
 object SimpleConsensusScenario {
   import Distributions._
+
+  val nNodes = 10
 
   // needed for the distributions, but needs to be initialised after setting the seed
   implicit val random = JSimulationScenario.getRandom()
 
-  val numberOfNodes = 20
-  val topology: List[NetAddress] = (0 to numberOfNodes - 1).toList.map(intToAddress(_))
+  val topology: List[NetAddress] = (0 to nNodes - 1).toList.map(intToAddress(_))
 
   private def intToAddress(i: Int): NetAddress = {
     try {
@@ -124,6 +124,6 @@ object SimpleConsensusScenario {
     val startCluster = raise(servers, startServerOp, 1.toN).arrival(constant(1.second))
 
     startCluster andThen
-      1000.seconds afterTermination Terminate
+      300.seconds afterTermination Terminate
   }
 }

@@ -71,14 +71,14 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
 
   ballotLeaderElection uponEvent {
     case BLE_Leader(l, n) => handle {
-//      printf(s"PROPOSING NEW LEADER: $l [$self] (n: $n, nL: $nL)\n")
+      printf(s"PROPOSING NEW LEADER: $l [$self] (n: $n, nL: $nL)\n")
 //      printf(s"TOPOLOGY: $pi\n")
       if (n > nL) {
         nL = n
         leader = Some(l)
 //        printf(s"NEW LEADER: $l [$self] (nL: $nL, nProm: $nProm)\n")
         if (self == l && nL > nProm) {
-//          printf(s"IM THE LEADER [$self]\n")
+          printf(s"IM THE LEADER [$self]\n")
           // Im a new leader, reset everything
           state = (LEADER, PREPARE)
           propCmds = List.empty
@@ -149,6 +149,8 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
     case NetMessage(header, Promise(n, na, sfxa, lda)) => handle {
       if ((n == nL) && (state == (LEADER, PREPARE))) {
 
+        println(s"PROMISE TO FOLLOW LEADER: ${header.src}")
+
         acks += (header.src -> (na, sfxa))
         lds += (header.src -> lda)
         // If we have a majority
@@ -156,6 +158,8 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
 
       } else if ((n == nL) && (state == (LEADER, ACCEPT))) {
         // Late answers
+        println(s"LATE TO FOLLOW LEADER: ${header.src}")
+
         lds += (header.src -> lda)
         val sfx = va.takeRight(va.size - lds(header.src))
         trigger(NetMessage(self, header.src, AcceptSync(nL, sfx, lds(header.src))) -> net)
@@ -181,6 +185,7 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
     case NetMessage(_, Decide(l, nL)) => handle {
       if (nProm == nL) {
         while (ld < l) {
+          println(s"[$self] DECIDED ON VALUE: ${va(ld)}")
           trigger(SC_Decide(va(ld)) -> sequenceConsensus)
           ld = ld + 1
         }
@@ -212,7 +217,9 @@ class SequencePaxos(init: Init[SequencePaxos]) extends ComponentDefinition {
         propCmds ++= List(c)
       }
       else if (state == (LEADER, ACCEPT)) {
-//        printf(s"INSTANT ACCEPT: $self (has leader $leader)\n");
+        printf(s"INSTANT ACCEPT: $self (has leader $leader)\n");
+        println(s"VALID SET: ${pi.filter(p => p != self && lds.contains(p))}")
+        println(s"COMPLETE SET: ${pi}")
         va ++= List(c)
         las(self) = las(self) + 1
         pi.filter(p => p != self && lds.contains(p))
