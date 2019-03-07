@@ -62,7 +62,26 @@ class ScenarioClient extends ComponentDefinition {
           Ops ++= List(new Write(s"test$i", s"$i"))
           Ops ++= List(new Read(s"test$i"))
         }
+      } else if (op_type == "CAS" ) {
+        for (i <- 0 to nMessages) {
+          // Shoud result in a list with the values 0..nValues
+          if (i < nMessages / 2)
+            Ops ++= List(new Write(s"test$i", s"$i"))
+          else
+            Ops ++= List(new Write(s"test$i", s"1"))
+        } // Ops = (1,2,3, ..., nMessages/2, 1, 1, ... )
+
+        for (i <- 0 to nMessages) {
+          if (i < nMessages / 2)
+            Ops ++= List(new CompareAndSwap(s"test$i", "1", Some("1"))) // Should not do anything
+          else
+            Ops ++= List(new CompareAndSwap(s"test$i", s"$i", Some("1"))) // Should replace the second half with correct values
+        }
+        for (i <- 0 to nMessages) {
+          Ops ++= List(new Read(s"test$i"))
+        }
       }
+
 
       sendMessage()
     }
@@ -80,7 +99,7 @@ class ScenarioClient extends ComponentDefinition {
   }
 
   net uponEvent {
-    case NetMessage(header, OpResponse(id, status, value)) => handle {
+    case NetMessage(header, opResp @ OpResponse(id, status, value)) => handle {
       logger.debug(s"Got OpResponse: $id")
 
       if (pending.isDefined && pending.get.id == id) {
@@ -98,7 +117,7 @@ class ScenarioClient extends ComponentDefinition {
         }
 
       } else {
-        logger.warn("ID $id was not pending! Ignoring response.")
+        printf(s"ID was not pending! Ignoring response message: $opResp\n")
       }
 // Should be here!
 //      if (op_index < Ops.size) {

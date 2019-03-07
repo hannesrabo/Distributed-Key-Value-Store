@@ -23,20 +23,17 @@
  */
 package se.kth.id2203.overlay
 
-;
-
 import com.larskroll.common.collections._
-import java.util.Collection
+//import java.util.Collection
 
 import se.kth.id2203.bootstrapping.NodeAssignment
 import se.kth.id2203.networking.NetAddress
 
-import scala.collection.mutable;
+//import scala.collection.mutable;
 
 @SerialVersionUID(0x57bdfad1eceeeaaeL)
 class LookupTable extends NodeAssignment with Serializable {
-
-  val NR_PARTITIONS = 5
+  val NR_PARTITIONS = 4
 
   val partitions = TreeSetMultiMap.empty[Int, NetAddress]
 

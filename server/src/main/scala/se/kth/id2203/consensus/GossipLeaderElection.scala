@@ -57,7 +57,10 @@ class GossipLeaderElection(init: Init[GossipLeaderElection]) extends ComponentDe
         ballot = incrementBallot(ballot)
       }
 
+      log.warn(s"Leader $leader suspected!")
+
       leader = None
+
     } else if (leader.isEmpty || top != leader.get) {
       highestBallot = topBallot
       leader = Some(top)
