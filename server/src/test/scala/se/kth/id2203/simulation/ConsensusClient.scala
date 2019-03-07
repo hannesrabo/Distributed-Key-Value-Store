@@ -15,6 +15,7 @@ trait ProposedOpTrait extends RSM_Command {
 }
 
 case class NET_Propose(command: String) extends KompicsEvent
+
 case class CheckTimeout(timeout: ScheduleTimeout) extends Timeout(timeout)
 
 case class ProposedOperation(command: String) extends ProposedOpTrait
@@ -31,19 +32,23 @@ class ConsensusClient(init: Init[ConsensusClient]) extends ComponentDefinition {
 
   private val alpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   private val size = alpha.length()
-  private val nMessages = 1
+  private val nMessages = 10
 
   private def randStr(n: Int) = (1 to n).map(_ => alpha(Random.nextInt.abs % size)).mkString
 
-  private var proposals: List[String] = (for (i <- 0 to nMessages) yield randStr(i + 5)).toList
+  private var proposals: List[String] = (for (i <- 0 to nMessages) yield randStr(i + 5))
+    .toList
+    .zipWithIndex
+    .map(x => s"$self:${x._2}:${x._1}")
 
-  var count: Int = 0
+  var addCount: Int = 0
+
   def addCommand(command: String): Unit = {
-    SimulationResult += (s"res:$self:$count" -> command)
-    count += 1
-    SimulationResult += (s"res:$self" -> count.toString())
-//    if (self > 17)
-//      println((s"res:$self:$count" -> command))
+    SimulationResult += (s"res:$self:$addCount" -> command)
+    addCount += 1
+    SimulationResult += (s"res:$self" -> addCount.toString())
+    //    if (self > 17)
+    //      println((s"res:$self:$count" -> command))
   }
 
   def sendCommand(): Unit = {
@@ -53,8 +58,8 @@ class ConsensusClient(init: Init[ConsensusClient]) extends ComponentDefinition {
     topology.foreach(node => {
       trigger(NetMessage(selfAddr, node, NET_Propose(currentCommand)) -> net);
       println(s"[$self] Sending Net Message to ${node.getIp()}")
-      if(node.getIp().toString == "192.193.0.19")
-          println(s"$self: $currentCommand")
+      if (node.getIp().toString == "192.193.0.19")
+        println(s"$self: $currentCommand")
     })
 
     // Send next command
@@ -76,7 +81,7 @@ class ConsensusClient(init: Init[ConsensusClient]) extends ComponentDefinition {
 
       SimulationResult += (s"prop:$self" -> proposals.size.toString())
       var i = 0
-      for(proposal: String <- proposals) {
+      for (proposal: String <- proposals) {
         SimulationResult += (s"prop:$self:$i" -> proposal)
         i += 1
       }

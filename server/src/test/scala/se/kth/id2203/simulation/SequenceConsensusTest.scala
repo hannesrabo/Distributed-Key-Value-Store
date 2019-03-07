@@ -1,4 +1,4 @@
-  package se.kth.id2203.simulation
+package se.kth.id2203.simulation
 
 import java.net.{InetAddress, UnknownHostException}
 
@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 
 class SequenceConsensusTest extends FlatSpec with Matchers {
 
-  val nServers = 10
+  val nServers = 20
 
   /**
     * # Sequence Paxos Properties
@@ -63,7 +63,7 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
 
     var propositionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
     var decisionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
-    for (i <- 1 to nServers) {
+    for (i <- 0 to nServers - 2) { // One of error fixed here. shh
       val propositionsLength: Int = SimulationResult.get[String](s"prop:$i").getOrElse("0").toInt
       val decisionsLength: Int = SimulationResult.get[String](s"res:$i").getOrElse("0").toInt
 
@@ -86,16 +86,57 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
 
       printf(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
 
-      //      decisionsLength should be(propositionsLength)
+//      1 should be(0)
     }
   }
 
+  // Termination
+  "All proposed values" should "be decided" in {
+    val seed = 123l
+    JSimulationScenario.setSeed(seed)
+    val simpleBootScenario = SimpleConsensusScenario.scenario(nServers)
+    val res = SimulationResultSingleton.getInstance()
+
+    simpleBootScenario.simulate(classOf[LauncherComp])
+
+    var allPropositions: List[String] = List.empty[String]
+    var allDecisions: List[String] = List.empty[String]
+    for (i <- 0 to nServers - 2) { // One of error fixed here. shh
+      val propositionsLength: Int = SimulationResult.get[String](s"prop:$i").getOrElse("0").toInt
+      val decisionsLength: Int = SimulationResult.get[String](s"res:$i").getOrElse("0").toInt
+
+      var buffer = ListBuffer.empty[String]
+      for (j <- 0 to propositionsLength - 1) {
+        val proposition: String = SimulationResult.get[String](s"prop:$i:$j").getOrElse("")
+        buffer += proposition
+      }
+      val propositions: List[String] = buffer.toList
+
+      buffer = ListBuffer.empty[String]
+      for (j <- 0 to decisionsLength - 1) {
+        val decision: String = SimulationResult.get[String](s"res:$i:$j").getOrElse("")
+        buffer += decision
+      }
+      val decisions = buffer.toList
+
+      allPropositions ++= propositions
+      allDecisions ++= decisions
+
+      printf(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
+
+    }
+
+    allDecisions.size should be(allPropositions.size)
+
+  }
 
 }
+
 object SimpleConsensusScenario {
+
   import Distributions._
 
-  val nNodes = 10
+  val nNodes = 20
 
   // needed for the distributions, but needs to be initialised after setting the seed
   implicit val random = JSimulationScenario.getRandom()
@@ -121,7 +162,7 @@ object SimpleConsensusScenario {
 
   def scenario(servers: Int): JSimulationScenario = {
 
-    val startCluster = raise(servers, startServerOp, 1.toN).arrival(constant(1.second))
+    val startCluster = raise(servers - 1, startServerOp, 0.toN).arrival(constant(1.second))
 
     startCluster andThen
       300.seconds afterTermination Terminate
