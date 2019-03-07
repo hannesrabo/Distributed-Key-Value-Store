@@ -53,7 +53,7 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
 
 
   // Validity
-  "Decided values" should "be non duplicate and proposed values" in {
+  "[Validity] Decided values" should "be non duplicate and proposed values" in {
     val seed = 123l
     JSimulationScenario.setSeed(seed)
     val simpleBootScenario = SimpleConsensusScenario.scenario(nServers)
@@ -61,7 +61,7 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
 
     simpleBootScenario.simulate(classOf[LauncherComp])
 
-    var propositionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
+    var proposalMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
     var decisionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
     for (i <- 0 to nServers - 2) { // One of error fixed here. shh
       val propositionsLength: Int = SimulationResult.get[String](s"prop:$i").getOrElse("0").toInt
@@ -81,17 +81,22 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
       }
       val decisions = buffer.toList
 
-      propositionMap += (i -> propositions)
+      proposalMap += (i -> propositions)
       decisionMap += (i -> decisions)
 
-      printf(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
+      println(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
+    }
 
-//      1 should be(0)
+    val allProposals: List[String] = proposalMap.flatMap(_._2).toList
+    val decisionList: List[String] = decisionMap.getOrElse(1, List.empty)
+
+    for (decision <- decisionList) {
+      allProposals.contains(decision) shouldBe(true)
     }
   }
 
   // Termination
-  "All proposed values" should "be decided" in {
+  "[Termination] All proposed values" should "be decided" in {
     val seed = 123l
     JSimulationScenario.setSeed(seed)
     val simpleBootScenario = SimpleConsensusScenario.scenario(nServers)
@@ -106,7 +111,7 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
       val decisionsLength: Int = SimulationResult.get[String](s"res:$i").getOrElse("0").toInt
 
       var buffer = ListBuffer.empty[String]
-      for (j <- 0 to propositionsLength - 1) {
+      for (j <- 4 to propositionsLength - 1) {
         val proposition: String = SimulationResult.get[String](s"prop:$i:$j").getOrElse("")
         buffer += proposition
       }
@@ -117,17 +122,51 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
         val decision: String = SimulationResult.get[String](s"res:$i:$j").getOrElse("")
         buffer += decision
       }
-      val decisions = buffer.toList
+      val decisions: List[String] = buffer.toList
 
       allPropositions ++= propositions
       allDecisions ++= decisions
 
-      printf(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
+//      println(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
 
     }
 
-    allDecisions.size should be(allPropositions.size)
+    println(s"[All]\n\t${allPropositions.size} propositions\n\t${allDecisions.size} decisions")
 
+    for (proposition <- allPropositions) {
+//      println(s"Comparing proposition: $proposition")
+      allDecisions.contains(proposition) shouldEqual (true)
+    }
+
+  }
+
+  // Uniform Agreement
+  "[Uniform Agreement] Decided values" should "be the same for every node" in {
+    val seed = 123l
+    JSimulationScenario.setSeed(seed)
+    val simpleBootScenario = SimpleConsensusScenario.scenario(nServers)
+    val res = SimulationResultSingleton.getInstance()
+
+    simpleBootScenario.simulate(classOf[LauncherComp])
+
+    var decisionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
+    for (i <- 0 to nServers - 2) { // One of error fixed here. shh
+      val decisionsLength: Int = SimulationResult.get[String](s"res:$i").getOrElse("0").toInt
+
+      var buffer = ListBuffer.empty[String]
+      for (j <- 0 to decisionsLength - 1) {
+        val decision: String = SimulationResult.get[String](s"res:$i:$j").getOrElse("")
+        buffer += decision
+      }
+      val decisions = buffer.toList
+
+      decisionMap += (i -> decisions)
+
+    }
+
+    val firstDecisionList: List[String] = decisionMap.getOrElse(0, List.empty)
+
+    decisionMap.toList.map(_._2).foreach(list => list should be(firstDecisionList))
   }
 
 }
@@ -165,6 +204,6 @@ object SimpleConsensusScenario {
     val startCluster = raise(servers - 1, startServerOp, 0.toN).arrival(constant(1.second))
 
     startCluster andThen
-      300.seconds afterTermination Terminate
+      500.seconds afterTermination Terminate
   }
 }
