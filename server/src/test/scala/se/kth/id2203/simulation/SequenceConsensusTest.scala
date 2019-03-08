@@ -79,12 +79,15 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
         val decision: String = SimulationResult.get[String](s"res:$i:$j").getOrElse("")
         buffer += decision
       }
-      val decisions = buffer.toList
+      val decisions: List[String] = buffer.toList
 
       proposalMap += (i -> propositions)
       decisionMap += (i -> decisions)
 
       println(s"[Node $i]\n\t$propositionsLength Propositions:$propositions\n\t$decisionsLength Decisions:$decisions\n")
+
+      // Test duplicates (all proposals have a unique id)
+      decisions.groupBy(identity).size should be(decisions.size)
     }
 
     val allProposals: List[String] = proposalMap.flatMap(_._2).toList
