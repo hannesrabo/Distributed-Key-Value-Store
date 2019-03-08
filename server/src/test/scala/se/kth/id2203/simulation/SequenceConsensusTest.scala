@@ -63,7 +63,7 @@ class SequenceConsensusTest extends FlatSpec with Matchers {
 
     var proposalMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
     var decisionMap: Map[Int, List[String]] = Map.empty[Int, List[String]]
-    for (i <- 0 to nServers - 2) { // One of error fixed here. shh
+    for (i <- 0 to nServers - 2) { // One off error fixed here. shh
       val propositionsLength: Int = SimulationResult.get[String](s"prop:$i").getOrElse("0").toInt
       val decisionsLength: Int = SimulationResult.get[String](s"res:$i").getOrElse("0").toInt
 
